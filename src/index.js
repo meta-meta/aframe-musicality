@@ -4,6 +4,8 @@ import 'aframe';
 import 'aframe-look-at-component';
 import _ from 'lodash';
 import Dod from './dod';
+import MultTableMod12 from './multTableMod12';
+import Tonnetz from './tonnetz';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Entity, Scene } from 'aframe-react';
@@ -78,24 +80,11 @@ class App extends React.Component {
     return (
       <Router>
         <Route path="/" exact render={routerProps => (
-          <>
-            {_.range(6).map(n => (
-              <pre>
-                {_.range(13).map(y => (
-                  <>
-                    {_.range(13).map(x => (
-                      <span key={x} style={{ padding: 3 }}>
-                        {_.padStart((n + x * y) % 12, 2, '0')}
-                      </span>
-                    ))}
-                    <br />
-                  </>
-                ))}
-
-              </pre>
-            ))}
-          </>
+            <h1>Hello World</h1>
         )} />
+
+        <Route path="/multTableMod12" render={MultTableMod12} />
+        <Route path="/tonnetz" render={Tonnetz} />
 
         <Route path="/vr" render={VR} />
 
