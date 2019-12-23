@@ -9,7 +9,7 @@ import Tonnetz from './tonnetz';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Entity, Scene } from 'aframe-react';
-import Midi from './midi';
+import ColtraneCircle from './coltraneCircle';
 import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
 
 const VR = ({ match: { path } }) => (
@@ -20,7 +20,7 @@ const VR = ({ match: { path } }) => (
     </a-assets>
 
     <Switch>
-      <Route path={`${path}/coltrane`} component={Midi} />
+      <Route path={`${path}/coltrane`} component={ColtraneCircle} />
       <Route path={`${path}/dod`} component={Dod} />
     </Switch>
 
@@ -96,8 +96,10 @@ class App extends React.Component {
             position: 'absolute',
           }}>
 
-          <Link to="/">Not VR</Link>
+          <Link to="/multTableMod12">MultTable</Link>
           -
+          <Link to="/tonnetz">Tonnetz</Link>
+          --
           <Link to="/vr/coltrane">Coltrane Circle</Link>
           -
           <Link to="/vr/dod">Dod</Link>

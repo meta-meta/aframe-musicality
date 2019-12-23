@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import React from 'react';
+import { toSymbol } from "./util";
 
 const MultTableMod12 = () => (
   <>
@@ -9,7 +10,7 @@ const MultTableMod12 = () => (
           <>
             {_.range(13).map(x => (
               <span key={x} style={{ padding: 3 }}>
-                {_.padStart((n + x * y) % 12, 2, '0')}
+                {toSymbol(n + x * y)}
               </span>
             ))}
             <br />

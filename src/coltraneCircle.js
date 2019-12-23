@@ -4,7 +4,7 @@ import React from 'react';
 import WebMidi from 'webmidi';
 import { Entity } from 'aframe-react';
 
-export default class Midi extends React.Component {
+export default class ColtraneCircle extends React.Component {
   state = {
     midiIn: _.zipObject(
       _.range(128),

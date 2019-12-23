@@ -3,7 +3,7 @@
   "name": "aframe-musicality",
   "version": "0.1.0",
   "dependencies": {
-    "aframe": "^0.9.0",
+    "aframe": "^1.0.1",
     "aframe-animation-component": "^5.1.2",
     "aframe-look-at-component": "^0.8.0",
     "aframe-particle-system-component": "^1.1.3",
