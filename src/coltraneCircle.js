@@ -1,45 +1,13 @@
 import _ from 'lodash';
 import PitchClass from './pitchClass';
 import React from 'react';
-import WebMidi from 'webmidi';
 import { Entity } from 'aframe-react';
 
 export default class ColtraneCircle extends React.Component {
-  state = {
-    midiIn: _.zipObject(
-      _.range(128),
-      _.fill(new Array(128), 0)),
-  }
-
-  componentDidMount() {
-    WebMidi.enable((err) => {
-      if (err) console.error(err);
-      else console.log('WebMidi enabled.');
-
-      console.log(WebMidi.inputs);
-      if (WebMidi.inputs[0]) {
-        WebMidi.inputs[0].addListener('noteon', 'all', this.handleMidi);
-        WebMidi.inputs[0].addListener('noteoff', 'all', this.handleMidi);
-      }
-    });
-  }
-
-  handleMidi = (e) => {
-    const n = e.note.number;
-    console.log(n)
-    this.setState({
-      midiIn: {
-        ...this.state.midiIn,
-        [n]: e.type === 'noteon' ? e.rawVelocity : 0
-      }
-    })
-  };
-
   render() {
-
     const midiInPitchClasses = _(12)
       .range()
-      .map(n => _(this.state.midiIn)
+      .map(n => _(this.props.midiIn)
         .pickBy((v, i) => i % 12 === n)
         .values()
         .sum())
@@ -128,4 +96,6 @@ export default class ColtraneCircle extends React.Component {
       </Entity>
     );
   }
+
+
 }

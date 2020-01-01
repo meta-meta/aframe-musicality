@@ -4,6 +4,7 @@ import 'aframe';
 import 'aframe-look-at-component';
 import _ from 'lodash';
 import Dod from './dod';
+import Midi from './midi';
 import MultTableMod12 from './multTableMod12';
 import Tonnetz from './tonnetz';
 import React from 'react';
@@ -12,7 +13,7 @@ import { Entity, Scene } from 'aframe-react';
 import ColtraneCircle from './coltraneCircle';
 import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
 
-const VR = ({ match: { path } }) => (
+const VR = ({ match: { path }, midiIn }) => (
   <Scene>
     <a-assets>
       <img id="groundTexture" src="https://cdn.aframe.io/a-painter/images/floor.jpg" />
@@ -20,7 +21,7 @@ const VR = ({ match: { path } }) => (
     </a-assets>
 
     <Switch>
-      <Route path={`${path}/coltrane`} component={ColtraneCircle} />
+      <Route path={`${path}/coltrane`} render={(routerProps) => <ColtraneCircle {...routerProps} midiIn={midiIn} />} />
       <Route path={`${path}/dod`} component={Dod} />
     </Switch>
 
@@ -86,7 +87,7 @@ class App extends React.Component {
         <Route path="/multTableMod12" render={MultTableMod12} />
         <Route path="/tonnetz" render={Tonnetz} />
 
-        <Route path="/vr" render={VR} />
+        <Route path="/vr" render={(routerProps) => <Midi {...routerProps} render={VR} />} />
 
         <div
           style={{
@@ -103,6 +104,8 @@ class App extends React.Component {
           <Link to="/vr/coltrane">Coltrane Circle</Link>
           -
           <Link to="/vr/dod">Dod</Link>
+
+
 
         </div>
       </Router>
