@@ -4,6 +4,8 @@ import React from 'react';
 import {Entity, Scene} from 'aframe-react';
 import {Route, Switch} from 'react-router-dom';
 
+// Note: needs https to enter VR
+
 const VR = ({match: {path}}) => (
   <Scene>
     <a-assets>

@@ -11,15 +11,12 @@ import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
 import VR from './vr';
 
 const App = () => (
-  <Router>
+  <Router basename={process.env.PUBLIC_URL}>
     <Route path="/" exact render={routerProps => (
       <h1>Hello World</h1>
     )} />
 
     <Route path="/vr" render={(routerProps) => <VR {...routerProps} />} />
-
-    {/* TODO: <iframe id="exampleIframe" class="example__iframe" width="100%" height="100%" allowfullscreen="yes" scrolling="no" allowvr="yes" src="https://aframe.io/aframe/examples/boilerplate/hello-world/"></iframe> */}
-
 
     <Route path="/multTableMod12" render={MultTableMod12} />
     <Route path="/tonnetz" render={Tonnetz} />
