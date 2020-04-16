@@ -3,9 +3,11 @@ import 'aframe';
 import 'aframe-look-at-component';
 import Midi from './midi';
 import MultTableMod12 from './multTableMod12';
+import NumpadMod12 from './numpadMod12';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Tonnetz from './tonnetz';
+import OSC from 'osc-js';
 
 import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
 import VR from './vr';
@@ -19,6 +21,9 @@ const App = () => (
     <Route path="/vr" render={(routerProps) => <VR {...routerProps} />} />
 
     <Route path="/multTableMod12" render={MultTableMod12} />
+
+    <Route path="/numpadMod12" render={() => <NumpadMod12 />} />
+
     <Route path="/tonnetz" render={Tonnetz} />
 
 
@@ -30,6 +35,8 @@ const App = () => (
         position: 'absolute',
       }}>
 
+      <Link to="/numpadMod12">Numpad</Link>
+      -
       <Link to="/multTableMod12">MultTable</Link>
       -
       <Link to="/tonnetz">Tonnetz</Link>
@@ -46,3 +53,9 @@ const App = () => (
 );
 
 ReactDOM.render(<App />, document.querySelector('#sceneContainer'));
+
+
+const osc = new OSC();
+osc.open();
+window.osc = osc;
+window.sendOsc = (address, ...args) => osc.send(new OSC.Message(address, ...args));
