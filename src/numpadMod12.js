@@ -18,6 +18,19 @@ class NumpadMod12 extends Component {
   handleKeyPress = (evt) => {
     // console.log(evt.code)
     const char = {
+      Backquote: '0',
+      Digit1: '1',
+      Digit2: '2',
+      Digit3: '3',
+      Digit4: '4',
+      Digit5: '5',
+      Digit6: '6',
+      Digit7: '7',
+      Digit8: '8',
+      Digit9: '9',
+      Digit0: '૪',
+      Minus: 'Ɛ',
+      Equal: '0',
       Numpad0: '0',
       Numpad1: '1',
       Numpad2: '2',
@@ -32,17 +45,32 @@ class NumpadMod12 extends Component {
       NumpadMultiply: 'Ɛ',
       NumpadDecimal: ' ',
       NumpadEnter: '\n',
+      Enter: '\n',
+      Space: ' ',
     }[evt.code];
 
-    if (char) this.setState({ text: this.state.text + char });
+    if (char) {
+      evt.preventDefault();
+      this.setState({ text: this.state.text + char });
+    }
   };
+
+  handleChange = ({ target: { value }}) => this.setState({ text: value });
 
   render() {
     return <div>
       <h3>Use the numpad to enter pitch classes</h3>
-      <pre>
-          {this.state.text}
-      </pre>
+      <textarea
+        cols={24}
+        rows={20}
+        onChange={this.handleChange}
+        style={{
+          background: 'black',
+          color: 'darkgray',
+          fontSize: 20,
+        }}
+        value={this.state.text}
+      />
     </div>
   }
 }

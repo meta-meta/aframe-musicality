@@ -1,29 +1,28 @@
 import _ from 'lodash';
+import PC from './pc';
 import React from 'react';
-import { toSymbol } from "./util";
 
 const Tonnetz = () => (
-  <pre style={{lineHeight: 3}}>
-
-    {_.range(20).map(y => (
-      <>
-        {y % 2 > 0 && (
-          <span style={{paddingRight: 21}}>
-            {' '}
-          </span>
-        )}
-
-        {_.range(30).map(x => (
-          <span key={x} style={{padding: 21}}>
-            {toSymbol(((y % 2 > 0
+  <div style={{
+    display: 'block',
+    flexShrink: 0,
+  }}>
+    {_.range(30)
+      .map(y => (
+        <>
+          {_.range(50).map(x => {
+            const n = ((y % 2 > 0
               ? ((y - 1) / 2) * 11 + 3
-              : (y / 2) * 11) + x * 7))}
-          </span>
-        ))}
-        <br/>
-      </>
-    ))}
+              : (y / 2) * 11) + x * 7) % 12;
 
-</pre>);
+            return (
+              <PC key={x} n={n} isOdd={y % 2 === 1}/>
+            )
+          })}
+          <br/>
+        </>
+      ))}
+  </div>
+);
 
 export default Tonnetz;
