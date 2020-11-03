@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/3.6.3/workbox-sw.js");
 
 importScripts(
-  "/aframe-musicality/precache-manifest.bab0f839c3a66e30ecb70bd579f562a5.js"
+  "/aframe-musicality/precache-manifest.f0c0c9de1d1d0eff50acff88cd990a49.js"
 );
 
 workbox.clientsClaim();
