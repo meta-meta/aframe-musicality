@@ -9,7 +9,7 @@ const PC = withStyles({
   },
 })(({classes, n, isOdd}) => (
   <Cell
-    className={n === 11 ? classes.el : ''}
+    className={n % 12 === 11 ? classes.el : ''}
     isOdd={isOdd}
   >
     {toSymbol(n)}
