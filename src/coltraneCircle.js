@@ -27,7 +27,10 @@ const ColtraneCircle = () => {
     .value();
 
   return (// https://www.npmjs.com/package/aframe-animation-component
-    <Entity animation={`property: rotation; to: 0 ${is180 ? 180 : 0} 0; dur: 500;`}>
+    <Entity
+      animation={`property: rotation; to: 0 ${is180 ? 180 : 0} 0; dur: 500;`}
+      position={`0 0 -3`}
+    >
       {_(12)
         .range()
         .filter(n => n % 2 == 0)

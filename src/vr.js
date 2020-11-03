@@ -42,7 +42,7 @@ const VR = ({match: {path}}) => (
       width="2048"
     />
 
-    <Entity primitive="a-camera" id="camera" position="0 0 2">
+    <Entity primitive="a-camera" id="camera" position="0 0 0">
       <Entity primitive="a-cursor" animation__click={{
         property: 'scale',
         startEvents: 'click',
@@ -51,6 +51,17 @@ const VR = ({match: {path}}) => (
         dur: 150,
       }}/>
     </Entity>
+
+    <Entity
+      // events={{}}
+      id="leftHand"
+      oculus-touch-controls="hand: left"
+    />
+    <Entity
+      id="rightHand"
+      oculus-touch-controls="hand: right"
+    />
+
   </Scene>
 );
 
