@@ -2,6 +2,7 @@ import 'aframe';
 // import 'aframe-animation-component';
 import 'aframe-look-at-component';
 import CssBaseline from '@material-ui/core/CssBaseline';
+import Banjo from './banjo';
 import Guitar from './guitar';
 import MultTableMod12 from './multTableMod12';
 import NumpadMod12 from './numpadMod12';
@@ -62,6 +63,8 @@ const App = () => {
 
         <Route path="/tonnetz" render={Tonnetz}/>
 
+        <Route path="/banjo" render={Banjo}/>
+
         <Route path="/guitar" render={Guitar}/>
 
         <AppBar
@@ -90,6 +93,7 @@ const App = () => {
                 ['Numpad', '/numpadMod12'],
                 ['Mod 12 Multiplication Tables', '/multTableMod12'],
                 ['Tonnetz', '/tonnetz'],
+                ['Banjo', '/banjo'],
                 ['Guitar', '/guitar'],
               ].map(([title, url], idx) => (
                 <MenuItem key={idx}>
