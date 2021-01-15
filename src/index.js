@@ -4,6 +4,7 @@ import 'aframe-look-at-component';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Banjo from './banjo';
 import Guitar from './guitar';
+import Intro from './intro';
 import MultTableMod12 from './multTableMod12';
 import NumpadMod12 from './numpadMod12';
 import OSC from 'osc-js';
@@ -51,21 +52,19 @@ const App = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline/>
       <Router basename={process.env.PUBLIC_URL}>
-        <Route path="/" exact render={routerProps => (
-          <h1>Hello World</h1>
-        )}/>
+        <Route path="/" exact component={Intro}/>
 
         <Route path="/vr" render={(routerProps) => <VR {...routerProps} />}/>
 
-        <Route path="/multTableMod12" render={MultTableMod12}/>
+        <Route path="/multTableMod12" component={MultTableMod12}/>
 
-        <Route path="/numpadMod12" render={() => <NumpadMod12/>}/>
+        <Route path="/numpadMod12" component={NumpadMod12}/>
 
-        <Route path="/tonnetz" render={Tonnetz}/>
+        <Route path="/tonnetz" component={Tonnetz}/>
 
-        <Route path="/banjo" render={Banjo}/>
+        <Route path="/banjo" component={Banjo}/>
 
-        <Route path="/guitar" render={Guitar}/>
+        <Route path="/guitar" component={Guitar}/>
 
         <AppBar
           position="fixed"
@@ -88,7 +87,10 @@ const App = () => {
               open={!!menuAnchorEl}
               onClose={handleMenuClose}
             >
-              <MenuItem disabled >2D</MenuItem>
+              <MenuItem >
+                <Link style={{ color: 'lightgrey'}} onClick={handleMenuClose} to="/">Introduction</Link>
+              </MenuItem>
+              <MenuItem disabled divider >2D</MenuItem>
               {[
                 ['Numpad', '/numpadMod12'],
                 ['Mod 12 Multiplication Tables', '/multTableMod12'],
@@ -100,8 +102,7 @@ const App = () => {
                   <Link style={{ color: 'pink'}} onClick={handleMenuClose} to={url}>{title}</Link>
                 </MenuItem>
               ))}
-              <MenuItem divider />
-              <MenuItem disabled >VR</MenuItem>
+              <MenuItem disabled divider>VR</MenuItem>
               {[
                 ['Coltrane Circle', '/vr/coltrane'],
                 ['Dod', '/vr/dod'],
