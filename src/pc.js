@@ -7,10 +7,11 @@ const PC = withStyles({
   el: {
     fontFamily: 'Segoe UI',
   },
-})(({classes, n, isOdd}) => (
+})(({classes, n, isOdd, style}) => (
   <Cell
     className={n % 12 === 11 ? classes.el : ''}
     isOdd={isOdd}
+    style={style}
   >
     {toSymbol(n)}
   </Cell>

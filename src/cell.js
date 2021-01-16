@@ -21,8 +21,11 @@ const Cell = withStyles({
     left: cellSize / 2,
     position: 'relative',
   }
-})(({children, classes, className = '', isOdd}) => (
-  <div className={`${classes.root} ${className} ${isOdd ? classes.odd : ''}`}>
+})(({children, classes, className = '', isOdd, style}) => (
+  <div
+    className={`${classes.root} ${className} ${isOdd ? classes.odd : ''}`}
+    style={style
+    }>
     {children}
   </div>
 ));
