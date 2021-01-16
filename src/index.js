@@ -7,7 +7,7 @@ import Guitar from './guitar';
 import Intro from './intro';
 import MultTableMod12 from './multTableMod12';
 import NumpadMod12 from './numpadMod12';
-import OSC from 'osc-js';
+import OSC from './osc';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Tonnetz from './tonnetz';
@@ -59,6 +59,8 @@ const App = () => {
         <Route path="/multTableMod12" component={MultTableMod12}/>
 
         <Route path="/numpadMod12" component={NumpadMod12}/>
+
+        <Route path="/osc" component={OSC}/>
 
         <Route path="/tonnetz" component={Tonnetz}/>
 
@@ -120,9 +122,3 @@ const App = () => {
 }
 
 ReactDOM.render(<App/>, document.querySelector('#sceneContainer'));
-
-
-const osc = new OSC();
-osc.open();
-window.osc = osc;
-window.sendOsc = (address, ...args) => osc.send(new OSC.Message(address, ...args));
