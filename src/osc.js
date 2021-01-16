@@ -63,13 +63,17 @@ const Osc = () => {
 
         const theta = (pc / 12) * Math.PI * 2;
 
-        return <PC key={idx} n={pc} style={{
-          color: _.includes(pcs, pc) ? 'cyan' : 'black',
-          fontSize: '3em',
-          position: 'absolute',
-          left: `${(0.35 * Math.sin(theta) + 0.5) * 100}%`,
-          top: `${(-0.35 * Math.cos(theta) + 0.5) * 100}%`,
-        }}/>
+        return (
+          <PC
+            key={idx}
+            n={pc}
+            style={{
+              color: _.includes(pcs, pc) ? 'cyan' : 'black',
+              fontSize: '1.5em',
+              position: 'absolute',
+              left: `${(0.25 * Math.sin(theta) + 0.5) * 100}%`,
+              top: `${(-0.25 * Math.cos(theta) + 0.5) * 100}%`,
+            }}/>)
       })}
     </div>
   </div>;
