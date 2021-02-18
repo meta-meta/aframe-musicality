@@ -1,6 +1,6 @@
 const OSC = require('osc-js');
 const os = require('os');
-const { address } = os.networkInterfaces().Ethernet.find(({family}) => family === 'IPv4');
+// const { address } = os.networkInterfaces().Ethernet.find(({family}) => family === 'IPv4');
 
 const wsPort = 8080;
 const udpPort = 41234;
@@ -25,6 +25,6 @@ const osc = new OSC({
 })
 
 osc.open() // start a WebSocket server on port 8080
-console.log(`listening at ${address}`)
+// console.log(`listening at ${address}`)
 console.log(`WS Port ${wsPort}`)
 console.log(`UDP Port ${udpPort}`)

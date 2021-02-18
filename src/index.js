@@ -1,8 +1,8 @@
-import 'aframe';
 // import 'aframe-animation-component';
+import 'aframe';
 import 'aframe-look-at-component';
-import CssBaseline from '@material-ui/core/CssBaseline';
 import Banjo from './banjo';
+import CssBaseline from '@material-ui/core/CssBaseline';
 import Guitar from './guitar';
 import Intro from './intro';
 import MultTableMod12 from './multTableMod12';
@@ -10,7 +10,10 @@ import NumpadMod12 from './numpadMod12';
 import OSC from './osc';
 import React from 'react';
 import ReactDOM from 'react-dom';
+import Mandelbrot from './mandelbrot';
+import Staff from './staff';
 import Tonnetz from './tonnetz';
+import Ukulele from './ukulele';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import VR from './vr';
 import {
@@ -23,6 +26,19 @@ import {
 import {BrowserRouter as Router, Route, Link} from 'react-router-dom';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import {Menu as MenuIcon} from '@material-ui/icons';
+
+
+const routes2d = [
+  ['Mod12 Multiplication Tables', '/multTableMod12', MultTableMod12],
+  ['PC-Number Notepad', '/numpadMod12', NumpadMod12],
+  ['OSC Dataviz', '/osc', OSC, true],
+  ['PC Tonnetz', '/tonnetz', Tonnetz],
+  ['Banjo PCs', '/banjo', Banjo],
+  ['Guitar PCs', '/guitar', Guitar],
+  ['Ukulele PCs', '/ukulele', Ukulele],
+  ['Staff', '/staff', Staff],
+  ['Mandelbrot', '/mandelbrot', Mandelbrot],
+];
 
 const App = () => {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
@@ -56,17 +72,9 @@ const App = () => {
 
         <Route path="/vr" render={(routerProps) => <VR {...routerProps} />}/>
 
-        <Route path="/multTableMod12" component={MultTableMod12}/>
-
-        <Route path="/numpadMod12" component={NumpadMod12}/>
-
-        <Route path="/osc" component={OSC}/>
-
-        <Route path="/tonnetz" component={Tonnetz}/>
-
-        <Route path="/banjo" component={Banjo}/>
-
-        <Route path="/guitar" component={Guitar}/>
+        {routes2d.map(([title, path, component], key) => (
+          <Route {...{ component, key, path }} />
+        ))}
 
         <AppBar
           position="fixed"
@@ -93,13 +101,7 @@ const App = () => {
                 <Link style={{ color: 'lightgrey'}} onClick={handleMenuClose} to="/">Introduction</Link>
               </MenuItem>
               <MenuItem disabled divider >2D</MenuItem>
-              {[
-                ['Numpad', '/numpadMod12'],
-                ['Mod 12 Multiplication Tables', '/multTableMod12'],
-                ['Tonnetz', '/tonnetz'],
-                ['Banjo', '/banjo'],
-                ['Guitar', '/guitar'],
-              ].map(([title, url], idx) => (
+              {routes2d.map(([title, url, component, isDevOnly], idx) => !isDevOnly && (
                 <MenuItem key={idx}>
                   <Link style={{ color: 'pink'}} onClick={handleMenuClose} to={url}>{title}</Link>
                 </MenuItem>
