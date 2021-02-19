@@ -4,10 +4,14 @@ import React, {useCallback, useEffect, useState} from 'react';
 
 const initialState = {
   hilbertN: 64, // hilbertN must be power of 2 in order to be square
+  hilbMand: [],
   isRedrawNeeded: false,
   maxMandelbrotIters: 1024,
   panX: -0.035,
   panY: 0.23,
+  tick: 0,
+  tickDuration: 10,
+  tickLastMillis: 0,
   zoom: 18,
 };
 
@@ -18,6 +22,8 @@ const sketch = (p5) => {
 
 
   /* Border size and color */
+  const CURSOR_STROKE_COLOR_SEPARATION = 20;
+  const CURSOR_ALPHA = 128;
   const STROKE_WEIGHT_COEF = 1;
   const STROKE_COLOR_LINEARIZED_VIEW = 64;
   const STROKE_COLOR_HILBERT_VIEW = 0;
@@ -137,23 +143,34 @@ const sketch = (p5) => {
   const mandGetBrightness = (val, maxIters) => val === maxIters ? 0 : 255;
   const mandGetHue = (val) => val % 255;
 
-  const setFillColorForMandelbrotCoord = (p5, coordWithVal, maxIters) => {
-    p5.fill(mandGetHue(coordWithVal.m), 255, mandGetBrightness(coordWithVal.m, maxIters));
+  const setFillColorForMandelbrotCoord = (p5, coordWithVal, maxIters, s = 255) => {
+    p5.fill(mandGetHue(coordWithVal.m), s, mandGetBrightness(coordWithVal.m, maxIters));
   }
 
-  const drawHilbertCoord = (p5, w, h, hilbertCoord, hilbertN) => {
+  const drawHilbertCoord = (w, h, hilbertCoord, hilbertN) => {
     const scaleX = w / hilbertN;
     const scaleY = h / hilbertN;
     p5.rect(hilbertCoord.x * scaleX, hilbertCoord.y * scaleY, scaleX, scaleY);
   }
 
-  const drawHilbertMandelbrot = (p5, w, h, coordsWithVals, maxIters, hilbertN, strokeWeight) => {
+  const drawHilbertMandelbrot = (p5, w, h, maxIters, hilbertN, strokeWeight) => {
     p5.strokeWeight(strokeWeight);
     p5.stroke(STROKE_COLOR_HILBERT_VIEW);
 
-    coordsWithVals.forEach(coordWithVal => {
+    const {hilbMand} = p5.state;
+    const maxD = hilbMand.length;
+    const s = getSideLengthForLinearizedMap(maxD, p5.width / 2, p5.height);
+
+    hilbMand.forEach((coordWithVal, d) => {
       setFillColorForMandelbrotCoord(p5, coordWithVal, maxIters);
-      drawHilbertCoord(p5, w, h, coordWithVal, hilbertN);
+      drawHilbertCoord(w, h, coordWithVal, hilbertN);
+
+      p5.push();
+      p5.translate(p5.width / 2, 0);
+      p5.strokeWeight(strokeWeightLinearized);
+      p5.stroke(STROKE_COLOR_LINEARIZED_VIEW);
+      drawLinearizedMandelbrotCoord(p5, p5.width / 2, s, d);
+      p5.pop();
     })
   };
 
@@ -207,16 +224,66 @@ const sketch = (p5) => {
 
   const genAndDrawHilbertMandelbrot = (dMax) => {
     const hilbMand = genHilbertMandelbrot(dMax);
+    p5.setState(prevState => ({ ...prevState, hilbMand }));
     const strokeWeightHilbert = hilbGetStrokeWeight(p5.width / 2, hilbMand.length);
     const { hilbertN, maxMandelbrotIters } = p5.state;
-    drawHilbertMandelbrot(p5, p5.width / 2, p5.height, hilbMand, maxMandelbrotIters, hilbertN, strokeWeightHilbert);
+    drawHilbertMandelbrot(p5, p5.width / 2, p5.height, maxMandelbrotIters, hilbertN, strokeWeightHilbert);
+
+    // p5.push();
+    // p5.translate(p5.width / 2, 0);
+    // drawLinearizedValues(p5.width / 2, p5.height, maxMandelbrotIters);
+    // p5.pop();
+
+    // generateNoteList();  // TODO: only generate if maxMandelbrotIters increased
+  }
+
+
+  const cursorErase = (p5, maxD, s, d) => {
+    const prevD = (maxD + d - 1) % maxD;
+    const { hilbMand } = p5.state;
+    const prevCoordAndVal = hilbMand[prevD];
+    const strokeWeightHilbert = hilbGetStrokeWeight(p5.width / 2, hilbMand.length);
+
+    setFillColorForMandelbrotCoord(p5, prevCoordAndVal, p5.state.maxMandelbrotIters);
+    p5.strokeWeight(strokeWeightHilbert);
+    p5.stroke(STROKE_COLOR_HILBERT_VIEW);
+    drawHilbertCoord(p5.width / 2, p5.height, prevCoordAndVal, p5.state.hilbertN);
 
     p5.push();
     p5.translate(p5.width / 2, 0);
-    drawLinearizedValues(p5.width / 2, p5.height, hilbMand, maxMandelbrotIters);
+    p5.strokeWeight(strokeWeightLinearized);
+    p5.stroke(STROKE_COLOR_LINEARIZED_VIEW);
+    drawLinearizedMandelbrotCoord(p5, p5.width / 2, s, prevD);
     p5.pop();
+  }
 
-    // generateNoteList();  // TODO: only generate if maxMandelbrotIters increased
+  const cursorDraw = (id, tick) => {
+    const { hilbMand } = p5.state;
+    const maxD = hilbMand.length;
+    const d = tick % maxD;
+    const s = getSideLengthForLinearizedMap(maxD, p5.width / 2, p5.height);
+
+    // previous cursor position
+    cursorErase(p5, maxD, s, d);
+
+    const coordAndVal = hilbMand[d];
+    const val = coordAndVal.m;
+
+    // base.playNote(id, notes.get(val % notes.size()), val == maxMandelbrotIters);
+
+    // p5.blendMode(p5.ADD);
+    p5.fill(255, CURSOR_ALPHA);
+    // setFillColorForMandelbrotCoord(p5, coordAndVal, p5.state.maxMandelbrotIters, CURSOR_ALPHA);
+    p5.strokeWeight(strokeWeightHilbert);
+    p5.stroke((CURSOR_STROKE_COLOR_SEPARATION * id) % 255, 255, 255);
+    drawHilbertCoord( p5.width / 2, p5.height, coordAndVal, p5.state.hilbertN);
+
+    p5.push();
+    p5.translate(p5.width / 2, 0);
+    p5.strokeWeight(strokeWeightLinearized);
+    drawLinearizedMandelbrotCoord(p5, p5.width / 2, s, d);
+    p5.pop();
+    // p5.blendMode(p5.REPLACE);
   }
 
 
@@ -232,6 +299,21 @@ const sketch = (p5) => {
       genAndDrawHilbertMandelbrot(getHilbertDMax());
       p5.setState(prevState => ({ ...prevState, isRedrawNeeded: false }));
     }
+
+    const { tick, tickDuration, tickLastMillis } = p5.state;
+    const now = p5.millis();
+    if (now > tickLastMillis + tickDuration) {
+      cursorDraw(0, tick);
+
+      p5.setState(prevState => ({
+        ...prevState,
+        tick: tick + 1,
+        tickLastMillis: now,
+      }));
+
+    }
+
+
     // p5.background(0)
     // p5.fill(255, 50, 50);
     // p5.circle(100, 100, 50);
@@ -278,24 +360,42 @@ const useP5 = (sketch) => {
   };
 }
 
-const handleKeyDown = (setSketchState) => ({ key }) => {
-  console.log(key);
+const handleKeyDown = (setSketchState) => (evt) => {
+  // console.log(evt);
+  const { ctrlKey, key } = evt;
+  if (key === 'Control') return;
 
   setSketchState(prevState => {
     const { hilbertN, panX, panY, zoom } = prevState;
     const panDelta = 0.1 / zoom;
-console.log(zoom)
+
+    const nextState = {
+      ...key === 'ArrowLeft'
+        ? ctrlKey
+          ? {hilbertN: Math.pow(2, Math.log2(hilbertN) - 1)}
+          : {panX: panX + panDelta}
+        : {},
+      ...key === 'ArrowRight'
+        ? ctrlKey
+          ? {hilbertN: Math.min(256, Math.pow(2, Math.log2(hilbertN) + 1))}
+          : {panX: panX - panDelta}
+        : {},
+      ...key === 'ArrowUp'
+        ? ctrlKey
+          ? {zoom: zoom * (10 / 9)}
+          : {panY: panY + panDelta}
+        : {},
+      ...key === 'ArrowDown'
+        ? ctrlKey
+          ? {zoom: zoom * (9 / 10)}
+          : {panY: panY - panDelta}
+        : {},
+    };
+
     return {
       ...prevState,
-      ...key === 'ArrowLeft' ? { panX: panX + panDelta } : {},
-      ...key === 'ArrowRight' ? { panX: panX - panDelta } : {},
-      ...key === 'ArrowUp' ? { panY: panY + panDelta } : {},
-      ...key === 'ArrowDown' ? { panY: panY - panDelta } : {},
-      ...key === 'PageUp' ? { zoom: zoom * (10/9) } : {},
-      ...key === 'PageDown' ? { zoom: zoom * (9/10) } : {},
-      ...key === ',' ? { hilbertN: Math.pow(2, Math.log2(hilbertN) - 1) } : {},
-      ...key === '.' ? { hilbertN: Math.pow(2, Math.log2(hilbertN) + 1) } : {},
-      isRedrawNeeded: true,
+      ...nextState,
+      isRedrawNeeded: !_.isEmpty(nextState),
     };
   })
   
