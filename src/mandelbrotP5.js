@@ -1,50 +1,78 @@
 import _ from 'lodash';
 
-const oscCount = 32;
+const partialsCountMax = 32;
+
+
+
+
+/* TODO
+
+* visualize partials excitation
+* no borders when zoomed in
+* params bound to urlParams
+* option to auto-choose fundamentalFreq
+  based on which partials are present
+  to center around 500 - 1000hz
+* option to add a second cursor for stereo effects
+* alternate space-filling curves
+* keep cursor in same location when switching resolutions
+* change partialsCountMax
+* colors based on octaves of fundamental
+* manual cursor
+* slide existing partials to new freqs on regen
+* */
+
+
 
 export const initialState = {
-  decayMillis: 1000,
-  excite: 0.001,
-  freq: 20,
+  decayDuration: 5000,
+  exciteEnergy: 0.05,
+  exciteDuration: 1000,
+  fundamentalFreq: 50,
   hilbertN: 64, // hilbertN must be power of 2 in order to be square
-  hilbMand: [],
+  hilbMand: [/*{ x, y, m }*/], // coordinates and associated mandelbrot val in hilbert traversal order
   isPlaying: false,
-  isRedrawNeeded: false,
-  maxIters: 4096,
-  panX: -0.035,
-  panY: 0.23,
+  isRegenNeeded: false,
+  maxIters: 4096, // max number of steps to recurse the mandelbrot fn
+  panX: -0.05,
+  panY: 0,
   tick: 0,
   tickDuration: 100,
   tickLastMillis: 0,
-  zoom: 18,
+  zoom: 1.2,
 
-  panX: 0.0011548427778035686,
-  panY: 0.025033026937542575,
-  zoom: 319852972190.0951,
+  // panX: 0.0011548427778035686,
+  // panY: 0.025033026937542575,
+  // zoom: 319852972190.0951,
+  //
+  // panX: -0.18498767183730766,
+  // panY: 0.4722205531430409,
+  // zoom: 419013953.31772846,
+  //
+  //
+  // decay: 0.000075,
+  // exciteEnergy: 0.006,
+  // fundamentalFreq: 10,
+  // hilbertN: 256,
+  // maxIters: 4096,
+  // panX: 0.0011503007796323155,
+  // panY: 0.025033026938902938,
+  // tickDuration: 10,
+  // zoom: 836635.9887997985,
+  //
+  //
+  //
+  // panX: 0.08871194014553094,
+  // panY: -0.12829271146701177,
+  // zoom: 19736096.460687958,
 
-  panX: -0.18498767183730766,
-  panY: 0.4722205531430409,
-  zoom: 419013953.31772846,
+  // ...{zoom: 39422433.84662852, panX: 0.04670942760989286, panY: 0.13656218122372943},
 
-
-  decay: 0.000075,
-  excite: 0.006,
-  freq: 10,
-  hilbertN: 256,
-  maxIters: 4096,
-  panX: 0.0011503007796323155,
-  panY: 0.025033026938902938,
-  tickDuration: 10,
-  zoom: 836635.9887997985,
-
-
-
-  panX: 0.08871194014553094,
-  panY: -0.12829271146701177,
-  zoom: 19736096.460687958,
+  // demo for 10 partials
+  // ...{zoom: 12371177.464729108, panX: 0.04671008941233588, panY: 0.13656133340058238},
 };
 
-let partials = {/* partial: { a, oscIdx } */};
+let partials = {/* partial: { amp, oscIdx } */};
 let audioCtx = new AudioContext();
 
 const masterGain = audioCtx.createGain();
@@ -52,7 +80,7 @@ window.masterGain = masterGain;
 masterGain.gain.value = 1;
 masterGain.connect(audioCtx.destination);
 
-const oscs = _.range(oscCount).map(() => {
+const oscs = _.range(partialsCountMax).map(() => {
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   gain.gain.value = 0;
@@ -72,14 +100,14 @@ export const sketch = (p5) => {
 
   /* Border size and color */
   const CURSOR_STROKE_COLOR_SEPARATION = 20;
-  const CURSOR_ALPHA = 128;
+  const CURSOR_ALPHA = 64;
   const STROKE_WEIGHT_COEF = 1;
   const STROKE_COLOR_LINEARIZED_VIEW = 255;
   const STROKE_COLOR_HILBERT_VIEW = 0;
   const strokeWeightHilbert = 0;
   let strokeWeightLinearized = 1;
 
-  //rotate/flip a quadrant appropriately
+  //rotate/flip amp quadrant appropriately
   const hilbGetRotatedVec = (n, v, rx, ry) => {
     if (ry === 0) {
       if (rx === 1) {
@@ -96,7 +124,7 @@ export const sketch = (p5) => {
 
   const hilbDistanceToVec = (size, dist) => {
     //    TODO: get distanceToVector based on percentage of maxD so that the Hilbert cursor stays in the same place when changing Hilbert resolutions
-    //    TODO: also click the screen to set the cursor so need a function to convert x,y to hilbert distance
+    //    TODO: also click the screen to set the cursor so need amp function to convert x,y to hilbert distance
 
     const v = {x: 0, y: 0};
     for (let s = 1; s < size; s *= 2) {
@@ -111,7 +139,7 @@ export const sketch = (p5) => {
   }
 
   /**
-   * Returns a {@code Vec} representing the Euclidian coordinates of the given normalized "Mandelbrot coordinates"
+   * Returns amp {@code Vec} representing the Euclidian coordinates of the given normalized "Mandelbrot coordinates"
    * <br>Mandelbrot X scale: -2.5 to 1
    * <br>Mandelbrot Y scale: -1 to 1
    * @param x normalized x coordinate 0 to 1.0
@@ -190,7 +218,7 @@ export const sketch = (p5) => {
   };
 
   const mandGetBrightness = (val, maxIters) => val === maxIters ? 0 : 255;
-  const mandGetHue = (val) => (val % oscCount) * (255 / oscCount);
+  const mandGetHue = (val) => (val % partialsCountMax) * (255 / partialsCountMax);
 
   const setFillColorForMandelbrotCoord = (p5, coordWithVal, maxIters, s = 255) => {
     p5.fill(mandGetHue(coordWithVal.m), s, mandGetBrightness(coordWithVal.m, maxIters));
@@ -259,30 +287,18 @@ export const sketch = (p5) => {
     p5.rect(x * s, y * s, s, s);
   }
 
-  const drawLinearizedValues = (w, h, coordsWithVals, maxIters) => {
-    const dMax = coordsWithVals.length;
-    const s = getSideLengthForLinearizedMap(dMax, w, h);
-    strokeWeightLinearized = getStrokeWeight(s);
-    p5.stroke(STROKE_COLOR_LINEARIZED_VIEW);
-    p5.strokeWeight(strokeWeightLinearized);
-    for (let d = 0; d < dMax; d++) {
-      setFillColorForMandelbrotCoord(p5, coordsWithVals[d], maxIters);
-      drawLinearizedMandelbrotCoord(p5, w, s, d);
-    }
-  }
-
   const genAndDrawHilbertMandelbrot = (dMax) => {
     const hilbMand = genHilbertMandelbrot(dMax);
 
     const {hilbertN, maxIters} = p5.state;
 
     partials = _(hilbMand)
-      .map(({m}) => m % oscCount + 1)
+      .map(({m}) => m % partialsCountMax + 1)
       .filter(m => m !== maxIters)
       .uniq()
       .sort()
-      .take(oscCount)
-      .map((m, i) => [m, {a: 0, oscIdx: i}])
+      .take(partialsCountMax)
+      .map((m, i) => [m, {amp: 0, oscIdx: i}])
       .fromPairs()
       .value()
 
@@ -295,7 +311,7 @@ export const sketch = (p5) => {
     })
 
     _.each(partials, ({oscIdx}, partial) => {
-      oscs[oscIdx].osc.frequency.value = partial * p5.state.freq;
+      oscs[oscIdx].osc.frequency.value = partial * p5.state.fundamentalFreq;
     });
 
     p5.setState(prevState => ({...prevState, hilbMand}));
@@ -311,7 +327,7 @@ export const sketch = (p5) => {
   }
 
 
-  const cursorErase = (p5, maxD, s, d) => {
+  const cursorErasePrev = (p5, maxD, s, d) => {
     const prevD = (maxD + d - 1) % maxD;
     const {hilbMand} = p5.state;
     const prevCoordAndVal = hilbMand[prevD];
@@ -331,46 +347,59 @@ export const sketch = (p5) => {
   }
 
   const cursorDrawAndExcite = (id, tick) => {
-    const {decayMillis, excite, hilbMand, maxIters} = p5.state;
+    const {
+      decayDuration,
+      exciteEnergy,
+      exciteDuration,
+      hilbMand,
+      maxIters,
+    } = p5.state;
+   
     const maxD = hilbMand.length;
     const d = tick % maxD;
     const s = getSideLengthForLinearizedMap(maxD, p5.width / 2, p5.height);
 
-    // previous cursor position
-    cursorErase(p5, maxD, s, d);
 
     const coordAndVal = hilbMand[d];
     const {m} = coordAndVal;
 
-    // const diff = 1 - amps[val];
     if (m !== maxIters) {
-      const val = m % oscCount + 1;
-      const {a, oscIdx} = partials[val];
+      const val = m % partialsCountMax + 1;
+      const partial = partials[val];
+      const {
+        amp,
+        decayTimerId,
+        oscIdx,
+        zeroGainTimerId,
+      } = partial;
       const {gain} = oscs[oscIdx];
 
-      // partials[val].a = 0.8 * Math.min(1, a + excite / (1 - a));
+      const isExcited = _.isNumber(decayTimerId);
+      const currGain = isExcited ? amp : gain.gain.value;
 
+      // console.log(val, currGain);
 
-      // const rampToTime = audioCtx.currentTime * (now - (p5.prevMillis || 0)) / 1000;
-      // console.log(rampToTime)
+      const targetGain = 0.8 * Math.min(1, currGain + exciteEnergy * (1 - currGain));
+      partial.amp = targetGain;
 
-      // gain.gain.value = a;
-      // gain.gain.cancelScheduledValues(audioCtx.currentTime);
-      const rampMillis = 200;//p5.state.tickDuration * 10;
-      // gain.gain.cancelScheduledValues(audioCtx.currentTime);
+      clearTimeout(decayTimerId); // further delay the decay
+      clearTimeout(zeroGainTimerId); // don't reset amp to zero
+      gain.gain.cancelScheduledValues(0);
+      gain.gain.linearRampToValueAtTime(targetGain, audioCtx.currentTime + exciteDuration / 1000);
 
-      const newGain = 0.8 * Math.min(1, gain.gain.value + excite * (1 - gain.gain.value))
+      partial.decayTimerId = setTimeout(() => {
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + decayDuration / 1000);
+        partial.decayTimerId = null;
 
-      // gain.gain.cancelScheduledValues(audioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(newGain, audioCtx.currentTime + rampMillis / 1000);
-
-      _.delay(() => {
-        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + decayMillis / 1000)
-      }, rampMillis);
+        partial.zeroGainTimerId = setTimeout(() => {
+          partial.amp = 0;
+        }, decayDuration)
+      }, exciteDuration);
     }
 
 
-    // base.playNote(id, notes.get(val % notes.size()), val == maxIters);
+
+    cursorErasePrev(p5, maxD, s, d);
 
     // p5.blendMode(p5.ADD);
     p5.fill(255, CURSOR_ALPHA);
@@ -397,7 +426,7 @@ export const sketch = (p5) => {
   p5.draw = () => {
     const {
       isPlaying,
-      isRedrawNeeded,
+      isRegenNeeded,
       tick,
       tickDuration,
       tickLastMillis,
@@ -411,14 +440,14 @@ export const sketch = (p5) => {
       audioCtx.suspend();
     }
 
-    if (isRedrawNeeded) {
+    if (isRegenNeeded) {
       genAndDrawHilbertMandelbrot(getHilbertDMax());
-      p5.setState(prevState => ({...prevState, isRedrawNeeded: false}));
+      p5.setState(prevState => ({...prevState, isRegenNeeded: false}));
     }
 
     const now = p5.millis();
 
-    if (now > tickLastMillis + tickDuration) {
+    if (isPlaying && now > tickLastMillis + tickDuration) {
       cursorDrawAndExcite(0, tick);
 
       p5.setState(prevState => ({

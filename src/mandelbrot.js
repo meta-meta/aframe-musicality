@@ -23,7 +23,7 @@ const useP5 = (sketch) => {
 
       const resize = (width, height) => {
         instance.resizeCanvas(width, height);
-        setSketchState((prevState) => ({...prevState, isRedrawNeeded: true}))
+        setSketchState((prevState) => ({...prevState, isRegenNeeded: true}))
       }
 
       const resizeObserver = new ResizeObserver(([{contentRect: {height, width}}]) => {
@@ -83,7 +83,7 @@ const handleKeyDown = (setSketchState) => (evt) => {
     return {
       ...prevState,
       ...nextState,
-      isRedrawNeeded: !_.isEmpty(nextState),
+      isRegenNeeded: !_.isEmpty(nextState),
     };
   })
 
