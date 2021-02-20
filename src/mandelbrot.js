@@ -2,18 +2,48 @@ import _ from 'lodash';
 import P5 from 'p5';
 import React, {useCallback, useEffect, useState} from 'react';
 
+const oscCount = 512;
+
 const initialState = {
+  excite: 0.001,
+  decay: 0.000075,
+  freq: 20,
   hilbertN: 64, // hilbertN must be power of 2 in order to be square
   hilbMand: [],
   isRedrawNeeded: false,
-  maxMandelbrotIters: 1024,
+  maxIters: 2048,
   panX: -0.035,
   panY: 0.23,
   tick: 0,
-  tickDuration: 10,
+  tickDuration: 100,
   tickLastMillis: 0,
   zoom: 18,
+
+  maxIters: 4096,
+  panX: 0.0011548427778035686,
+  panY: 0.025033026937542575,
+  zoom: 319852972190.0951,
 };
+
+let partials = {/* partial: { a, oscIdx } */};
+let audioCtx = new AudioContext();
+
+const masterGain = audioCtx.createGain();
+window.masterGain = masterGain;
+masterGain.gain.value = 1;
+masterGain.connect(audioCtx.destination);
+
+const oscs = _.range(oscCount).map(() => {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  gain.gain.value = 0;
+  osc.connect(gain);
+  gain.connect(masterGain);
+  osc.start();
+  return { osc, gain };
+})
+
+window.oscs = oscs;
 
 const sketch = (p5) => {
   p5.state = initialState;
@@ -25,10 +55,10 @@ const sketch = (p5) => {
   const CURSOR_STROKE_COLOR_SEPARATION = 20;
   const CURSOR_ALPHA = 128;
   const STROKE_WEIGHT_COEF = 1;
-  const STROKE_COLOR_LINEARIZED_VIEW = 64;
+  const STROKE_COLOR_LINEARIZED_VIEW = 255;
   const STROKE_COLOR_HILBERT_VIEW = 0;
   const strokeWeightHilbert = 0;
-  let strokeWeightLinearized = 0;
+  let strokeWeightLinearized = 1;
 
   //rotate/flip a quadrant appropriately
   const hilbGetRotatedVec = (n, v, rx, ry) => {
@@ -118,7 +148,7 @@ const sketch = (p5) => {
       const {x, y} = hilbDistanceToVec(hilbertN, d);
 
       const {
-        maxMandelbrotIters,
+        maxIters,
         panX,
         panY,
         zoom,
@@ -127,7 +157,7 @@ const sketch = (p5) => {
       return {
         x,
         y,
-        m: mandGetValFromNormalizedCoords(x / hilbertN, y / hilbertN, panX, panY, zoom, maxMandelbrotIters)
+        m: mandGetValFromNormalizedCoords(x / hilbertN, y / hilbertN, panX, panY, zoom, maxIters),
       };
     });
 
@@ -141,7 +171,7 @@ const sketch = (p5) => {
   };
 
   const mandGetBrightness = (val, maxIters) => val === maxIters ? 0 : 255;
-  const mandGetHue = (val) => val % 255;
+  const mandGetHue = (val) => (val % oscCount) * (255 / oscCount);
 
   const setFillColorForMandelbrotCoord = (p5, coordWithVal, maxIters, s = 255) => {
     p5.fill(mandGetHue(coordWithVal.m), s, mandGetBrightness(coordWithVal.m, maxIters));
@@ -224,17 +254,41 @@ const sketch = (p5) => {
 
   const genAndDrawHilbertMandelbrot = (dMax) => {
     const hilbMand = genHilbertMandelbrot(dMax);
+
+    const { hilbertN, maxIters } = p5.state;
+
+    partials = _(hilbMand)
+      .map(({m}) => m % oscCount + 1)
+      .filter(m => m !== maxIters)
+      .uniq()
+      .sort()
+      .take(oscCount)
+      .map((m, i) => [m, { a: 0, oscIdx: i }])
+      .fromPairs()
+      .value()
+
+    window.partials = partials;
+
+    console.log('partials', _.keys(partials))
+
+    oscs.forEach(({ gain }) => {
+      gain.gain.value = 0;
+    })
+
+    _.each(partials, ({ oscIdx }, partial) => {
+      oscs[oscIdx].osc.frequency.value = partial * p5.state.freq;
+    });
+
     p5.setState(prevState => ({ ...prevState, hilbMand }));
     const strokeWeightHilbert = hilbGetStrokeWeight(p5.width / 2, hilbMand.length);
-    const { hilbertN, maxMandelbrotIters } = p5.state;
-    drawHilbertMandelbrot(p5, p5.width / 2, p5.height, maxMandelbrotIters, hilbertN, strokeWeightHilbert);
+    drawHilbertMandelbrot(p5, p5.width / 2, p5.height, maxIters, hilbertN, strokeWeightHilbert);
 
     // p5.push();
     // p5.translate(p5.width / 2, 0);
-    // drawLinearizedValues(p5.width / 2, p5.height, maxMandelbrotIters);
+    // drawLinearizedValues(p5.width / 2, p5.height, maxIters);
     // p5.pop();
 
-    // generateNoteList();  // TODO: only generate if maxMandelbrotIters increased
+    // generateNoteList();  // TODO: only generate if maxIters increased
   }
 
 
@@ -244,7 +298,7 @@ const sketch = (p5) => {
     const prevCoordAndVal = hilbMand[prevD];
     const strokeWeightHilbert = hilbGetStrokeWeight(p5.width / 2, hilbMand.length);
 
-    setFillColorForMandelbrotCoord(p5, prevCoordAndVal, p5.state.maxMandelbrotIters);
+    setFillColorForMandelbrotCoord(p5, prevCoordAndVal, p5.state.maxIters);
     p5.strokeWeight(strokeWeightHilbert);
     p5.stroke(STROKE_COLOR_HILBERT_VIEW);
     drawHilbertCoord(p5.width / 2, p5.height, prevCoordAndVal, p5.state.hilbertN);
@@ -257,8 +311,8 @@ const sketch = (p5) => {
     p5.pop();
   }
 
-  const cursorDraw = (id, tick) => {
-    const { hilbMand } = p5.state;
+  const cursorDrawAndExcite = (id, tick) => {
+    const { excite, hilbMand, maxIters } = p5.state;
     const maxD = hilbMand.length;
     const d = tick % maxD;
     const s = getSideLengthForLinearizedMap(maxD, p5.width / 2, p5.height);
@@ -267,13 +321,38 @@ const sketch = (p5) => {
     cursorErase(p5, maxD, s, d);
 
     const coordAndVal = hilbMand[d];
-    const val = coordAndVal.m;
+    const { m } = coordAndVal;
 
-    // base.playNote(id, notes.get(val % notes.size()), val == maxMandelbrotIters);
+    // const diff = 1 - amps[val];
+    if (m !== maxIters) {
+      const val = m % oscCount + 1;
+      const { a, oscIdx } = partials[val];
+      const { gain } = oscs[oscIdx];
+
+      // partials[val].a = 0.8 * Math.min(1, a + excite / (1 - a));
+
+
+      // const rampToTime = audioCtx.currentTime * (now - (p5.prevMillis || 0)) / 1000;
+      // console.log(rampToTime)
+
+      // gain.gain.value = a;
+      // gain.gain.cancelScheduledValues(audioCtx.currentTime);
+      const rampMillis = p5.state.tickDuration * 10;
+      // gain.gain.cancelScheduledValues(audioCtx.currentTime);
+
+      const newGain = 0.8 * Math.min(1, gain.gain.value + excite / (1 - gain.gain.value))
+
+      gain.gain.linearRampToValueAtTime(newGain, audioCtx.currentTime + rampMillis / 1000);
+
+      _.delay(() => gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2), rampMillis);
+    }
+
+
+    // base.playNote(id, notes.get(val % notes.size()), val == maxIters);
 
     // p5.blendMode(p5.ADD);
     p5.fill(255, CURSOR_ALPHA);
-    // setFillColorForMandelbrotCoord(p5, coordAndVal, p5.state.maxMandelbrotIters, CURSOR_ALPHA);
+    // setFillColorForMandelbrotCoord(p5, coordAndVal, p5.state.maxIters, CURSOR_ALPHA);
     p5.strokeWeight(strokeWeightHilbert);
     p5.stroke((CURSOR_STROKE_COLOR_SEPARATION * id) % 255, 255, 255);
     drawHilbertCoord( p5.width / 2, p5.height, coordAndVal, p5.state.hilbertN);
@@ -302,8 +381,9 @@ const sketch = (p5) => {
 
     const { tick, tickDuration, tickLastMillis } = p5.state;
     const now = p5.millis();
+
     if (now > tickLastMillis + tickDuration) {
-      cursorDraw(0, tick);
+      cursorDrawAndExcite(0, tick);
 
       p5.setState(prevState => ({
         ...prevState,
@@ -313,7 +393,22 @@ const sketch = (p5) => {
 
     }
 
+    // _.each(partials, ({ a, oscIdx }, i) => {
+    //   // partials[i].a = Math.max(0, a -= p5.state.decay);
+    //   const { gain } = oscs[oscIdx];
+    //
+    //   // const rampToTime = audioCtx.currentTime * (now - (p5.prevMillis || 0)) / 1000;
+    //   // console.log(rampToTime)
+    //
+    //   // gain.gain.value = a;
+    //   // gain.gain.cancelScheduledValues(audioCtx.currentTime);
+    //   // gain.gain.linearRampToValueAtTime(
+    //   //   a,
+    //   //   rampToTime,
+    //   // );
+    // });
 
+    p5.prevMillis = now;
     // p5.background(0)
     // p5.fill(255, 50, 50);
     // p5.circle(100, 100, 50);
@@ -422,6 +517,7 @@ const Mandelbrot = () => {
   return (
     <div
       style={{
+        alignSelf: 'start',
         background: 'darkcyan',
         height: '50vw',
         width: '100vw',
