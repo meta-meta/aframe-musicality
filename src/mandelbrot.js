@@ -10,6 +10,7 @@ const initialState = {
   freq: 20,
   hilbertN: 64, // hilbertN must be power of 2 in order to be square
   hilbMand: [],
+  isPlaying: false,
   isRedrawNeeded: false,
   maxIters: 2048,
   panX: -0.035,
@@ -456,15 +457,20 @@ const useP5 = (sketch) => {
 }
 
 const handleKeyDown = (setSketchState) => (evt) => {
-  // console.log(evt);
-  const { ctrlKey, key } = evt;
+  console.log(evt);
+  const { code, ctrlKey, key } = evt;
   if (key === 'Control') return;
 
   setSketchState(prevState => {
-    const { hilbertN, panX, panY, zoom } = prevState;
+    const { hilbertN, isPlaying, panX, panY, zoom } = prevState;
     const panDelta = 0.1 / zoom;
 
+    if (code === 'Space') {
+      audioCtx[isPlaying ? 'suspend' : 'resume']();
+    }
+
     const nextState = {
+      ...code === 'Space' ? {isPlaying: !isPlaying} : {},
       ...key === 'ArrowLeft'
         ? ctrlKey
           ? {hilbertN: Math.pow(2, Math.log2(hilbertN) - 1)}
