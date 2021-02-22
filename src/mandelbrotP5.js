@@ -8,7 +8,6 @@ const partialsCountMax = 16;
 /* TODO
 
 * visualize partials excitation
-* no borders when zoomed in
 * params bound to urlParams
 * option to auto-choose fundamentalFreq
   based on which partials are present
@@ -17,7 +16,6 @@ const partialsCountMax = 16;
 * alternate space-filling curves
 * keep cursor in same location when switching resolutions
 * change partialsCountMax
-* colors based on octaves of fundamental
 * manual cursor
 * for hilbertN of 256 or 512, use the vals to fill an audio buffer and play the ~1 or ~5s of audio
 * utonal partials
@@ -37,8 +35,16 @@ export const initialState = {
   maxIters: 4096, // max number of steps to recurse the mandelbrot fn
   panX: -0.05,
   panY: 0,
+  isSmooth: false, // smooth technique https://iquilezles.org/www/articles/mset_smooth/mset_smooth.htm
+  tick: 0, // updated in draw() bypasses setState
   tickDuration: 100,
+  tickLastMillis: 0, // updated in draw() bypasses setState
   zoom: 1.2,
+
+  // zoom: 3603.7157567397, panX: 0.18580280974577668, panY: 0.00036930706052212803,
+
+  // floating point errors here
+  // zoom: 279919582741326.66, panX: -0.014853203736137617, panY: 0.13451319076043783,
 
   // panX: 0.0011548427778035686,
   // panY: 0.025033026937542575,
@@ -153,6 +159,7 @@ export const sketch = (p5) => {
     y: -1 + y * 2,
   })
 
+
   /**
    * Returns the number of iterations to escape the Mandelbrot set at the given coordinates
    * @param scaledX
@@ -173,6 +180,36 @@ export const sketch = (p5) => {
     return iter;
   }
 
+
+  const dot = (v1, v2) => _.reduce(v1, (acc, val, idx) => acc + val * v2[idx], 0);
+
+  /**
+   * https://iquilezles.org/www/articles/mset_smooth/mset_smooth.htm
+   * @param cx
+   * @param cy
+   * @param maxIterations
+   * @returns {*|number}
+   */
+  const mandGetValSmooth = (cx, cy, maxIterations) => {
+    const Bsq = 256 * 256;
+    const z = [0,0];
+    let n = 0;
+    let x, y;
+
+    for (let i = 0; i < maxIterations; i++) {
+      [x, y] = z;
+      z[0] = x * x - y * y + cx;
+      z[1] = 2 * x * y + cy;
+      if (dot(z, z) > Bsq) break;
+      n++;
+    }
+
+    // return n - Math.log(Math.log(Math.sqrt(z[0] * z[0] + z[1] * z[1]) / Math.log(B) / Math.log(2)))
+    return n >= maxIterations
+      ? maxIterations
+      : n - Math.log2(Math.log2(dot(z,z))) + 4;
+  }
+
   /**
    * Returns the number of iterations required to escape the Mandelbrot set at the given coordinates
    * @param xN normalized x coordinate 0 to 1.0
@@ -187,7 +224,9 @@ export const sketch = (p5) => {
     let x1 = 0.5 - panX + (xN - 0.5) / zoom;
     let y1 = 0.5 - panY + (yN - 0.5) / zoom;
     const {x, y} = mandGetDenormalizedCoords(x1, y1);
-    return mandGetVal(x, y, maxIterations);
+    return p5.state.isSmooth
+      ? mandGetValSmooth(x, y, maxIterations)
+      : mandGetVal(x, y, maxIterations);
   }
 
   const genHilbertCoords = _.memoize((hilbertN) =>
@@ -213,7 +252,7 @@ export const sketch = (p5) => {
         m,
         p: m === maxIters
           ? 0 // to be filtered out
-          : ((m - 1) % partialsCountMax) + 1,
+          : Math.floor(((m - 1) % partialsCountMax) + 1),
       };
     })
   };
@@ -223,7 +262,7 @@ export const sketch = (p5) => {
     return STROKE_WEIGHT_COEF * Math.min(10, sideLength / 20);
   };
 
-  const constrainToOctave = _.memoize((f) =>
+  const getPartialOfOctaveStart = _.memoize((f) =>
     _(100)
       .range()
       .map(n => Math.pow(2, n))
@@ -232,13 +271,14 @@ export const sketch = (p5) => {
 
   const setFillColorForMandelbrotVal = ({m, p}, maxIters, isCursor = false) => {
 
-    const octMax = constrainToOctave(partialsCountMax);
+    const octMax = getPartialOfOctaveStart(partialsCountMax);
+    const oct = getPartialOfOctaveStart(p);
 
-    const oct = constrainToOctave(p);
-    const hCoef = Math.log2(p/oct);
-    // console.log(p, oct, p/oct, hCoef)
+    // good looks with smooth but not relevant to partials
+    // const h = (m * 10) % 255;
+    // const s = isCursor ? 0 : 255 - (m / maxIters) * 225  //(p / partialsCountMax) * 225;
 
-    const h = 255 * hCoef; //p * (255 / partialsCountMax);
+    const h = 255 * Math.log2(p / oct);
     const s = isCursor ? 0 : 255 - Math.pow(oct / octMax, 2) * 225  //(p / partialsCountMax) * 225;
     const b = m === maxIters ? 0 : 255;
 
@@ -385,7 +425,7 @@ export const sketch = (p5) => {
 
   const cursorDraw = (id) => {
     const {hilbMand} = p5.state;
-    const d = p5.tick % hilbMand.length;
+    const d = p5.state.tick % hilbMand.length;
     const coordAndVal = hilbMand[d];
     const sideLength = getSideLengthForLinearizedMap(hilbMand.length, p5.width / 4, p5.height);
     const strokeWeight = getStrokeWeight(p5.width / 2);
@@ -417,9 +457,10 @@ export const sketch = (p5) => {
       exciteEnergy,
       exciteDuration,
       hilbMand,
+      tick,
     } = p5.state;
 
-    const d = p5.tick % hilbMand.length;
+    const d = tick % hilbMand.length;
     const {p} = hilbMand[d];
 
     if (p > 0) {
@@ -459,8 +500,6 @@ export const sketch = (p5) => {
   p5.setup = () => {
     p5.createCanvas(p5._width, p5._height);
     p5.colorMode(p5.HSB);
-    p5.tick = 0;
-    p5.tickLastMillis = 0;
     genAndDrawHilbertMandelbrot();
   }
 
@@ -469,6 +508,7 @@ export const sketch = (p5) => {
       isPlaying,
       isRegenNeeded,
       tickDuration,
+      tickLastMillis,
     } = p5.state;
 
     if (isRegenNeeded) {
@@ -481,12 +521,12 @@ export const sketch = (p5) => {
     if (_.every([
       !isRegenNeeded,
       isPlaying,
-      now > p5.tickLastMillis + tickDuration
+      now > tickLastMillis + tickDuration
     ])) {
       cursorDraw(0);
       cursorExcite(0);
-      p5.tick++;
-      p5.tickLastMillis = now;
+      p5.state.tick++;
+      p5.state.tickLastMillis = now;
     }
   }
 
