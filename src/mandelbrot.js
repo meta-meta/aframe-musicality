@@ -44,37 +44,38 @@ const useP5 = (sketch) => {
   };
 }
 
-const handleKeyDown = (setSketchState) => (evt) => {
-  // console.log(evt);
-  const {code, ctrlKey, key} = evt;
-  if (key === 'Control') return;
+const handleKeyDown = (setSketchState, sketchInstance) => (evt) => {
+  console.log(evt);
+  const {code, shiftKey, key} = evt;
+  if (_.includes(['Control', 'Shift'], key)) return;
 
   setSketchState(prevState => {
     const {hilbertN, isPlaying, panX, panY, zoom} = prevState;
     const panDelta = 0.1 / zoom;
 
     if (code === 'Space') {
+      sketchInstance.toggleAudio(!isPlaying);
       return { ...prevState, isPlaying: !isPlaying}
     }
 
     const nextState = {
       ...key === 'ArrowLeft'
-        ? ctrlKey
+        ? shiftKey
           ? {hilbertN: Math.pow(2, Math.log2(hilbertN) - 1)}
           : {panX: panX + panDelta}
         : {},
       ...key === 'ArrowRight'
-        ? ctrlKey
+        ? shiftKey
           ? {hilbertN: Math.min(256, Math.pow(2, Math.log2(hilbertN) + 1))}
           : {panX: panX - panDelta}
         : {},
       ...key === 'ArrowUp'
-        ? ctrlKey
+        ? shiftKey
           ? {zoom: zoom * (10 / 9)}
           : {panY: panY + panDelta}
         : {},
       ...key === 'ArrowDown'
-        ? ctrlKey
+        ? shiftKey
           ? {zoom: zoom * (9 / 10)}
           : {panY: panY - panDelta}
         : {},
@@ -100,12 +101,14 @@ const Mandelbrot = () => {
   window.sketchInstance = sketchInstance;
 
   useEffect(() => {
-    const handler = handleKeyDown(setSketchState);
-    window.addEventListener('keydown', handler)
-    return () => { // cleanup
-      window.removeEventListener('keydown', handler);
-    };
-  }, []);
+    if (sketchInstance) {
+      const handler = handleKeyDown(setSketchState, sketchInstance);
+      window.addEventListener('keydown', handler)
+      return () => { // cleanup
+        window.removeEventListener('keydown', handler);
+      };
+    }
+  }, [sketchInstance]);
 
   return (
     <div
