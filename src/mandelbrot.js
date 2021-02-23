@@ -1,7 +1,10 @@
 import _ from 'lodash';
+import Decimal from 'decimal.js-light';
 import P5 from 'p5';
 import React, {useCallback, useEffect, useState} from 'react';
 import { initialState, sketch } from "./mandelbrotP5";
+
+
 
 const useP5 = (sketch) => {
   const [sketchState, setSketchState] = useState(initialState);
@@ -51,7 +54,7 @@ const handleKeyDown = (setSketchState, sketchInstance) => (evt) => {
 
   setSketchState(prevState => {
     const {hilbertN, isPlaying, panX, panY, zoom} = prevState;
-    const panDelta = 0.1 / zoom;
+    const panDelta = Decimal(0.1).div(zoom);
 
     if (code === 'Space') {
       sketchInstance.toggleAudio(!isPlaying);
@@ -62,22 +65,22 @@ const handleKeyDown = (setSketchState, sketchInstance) => (evt) => {
       ...key === 'ArrowLeft'
         ? shiftKey
           ? {hilbertN: Math.pow(2, Math.log2(hilbertN) - 1)}
-          : {panX: panX + panDelta}
+          : {panX: panX.plus(panDelta)}
         : {},
       ...key === 'ArrowRight'
         ? shiftKey
           ? {hilbertN: Math.min(256, Math.pow(2, Math.log2(hilbertN) + 1))}
-          : {panX: panX - panDelta}
+          : {panX: panX.minus(panDelta)}
         : {},
       ...key === 'ArrowUp'
         ? shiftKey
-          ? {zoom: zoom * (10 / 9)}
-          : {panY: panY + panDelta}
+          ? {zoom: zoom.times(10 / 9)}
+          : {panY: panY.plus(panDelta)}
         : {},
       ...key === 'ArrowDown'
         ? shiftKey
-          ? {zoom: zoom * (9 / 10)}
-          : {panY: panY - panDelta}
+          ? {zoom: zoom.times(9 / 10)}
+          : {panY: panY.minus(panDelta)}
         : {},
     };
 

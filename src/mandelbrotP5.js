@@ -1,7 +1,6 @@
 import _ from 'lodash';
-
+import Decimal from 'decimal.js-light';
 const partialsCountMax = 16;
-
 
 
 
@@ -33,18 +32,18 @@ export const initialState = {
   isPlaying: false,
   isRegenNeeded: false,
   maxIters: 4096, // max number of steps to recurse the mandelbrot fn
-  panX: -0.05,
-  panY: 0,
+  panX: Decimal(-0.05),
+  panY: Decimal(0),
   isSmooth: false, // smooth technique https://iquilezles.org/www/articles/mset_smooth/mset_smooth.htm
   tick: 0, // updated in draw() bypasses setState
   tickDuration: 100,
   tickLastMillis: 0, // updated in draw() bypasses setState
-  zoom: 1.2,
+  zoom: Decimal(1.2),
 
   // zoom: 3603.7157567397, panX: 0.18580280974577668, panY: 0.00036930706052212803,
 
   // floating point errors here
-  // zoom: 279919582741326.66, panX: -0.014853203736137617, panY: 0.13451319076043783,
+  zoom: Decimal(279919582741326.66), panX: Decimal(-0.014853203736137617), panY: Decimal(0.13451319076043783),
 
   // panX: 0.0011548427778035686,
   // panY: 0.025033026937542575,
@@ -155,8 +154,8 @@ export const sketch = (p5) => {
    * @return
    */
   const mandGetDenormalizedCoords = (x, y) => ({
-    x: -2.5 + x * 3.5,
-    y: -1 + y * 2,
+    x: x.times(3.5).minus(2.5),
+    y: y.times(2).minus(1),
   })
 
 
@@ -168,13 +167,15 @@ export const sketch = (p5) => {
    * @return
    */
   const mandGetVal = (scaledX, scaledY, maxIterations) => {
-    let x = 0, y = 0;
+    let x = Decimal(0);
+    let y = Decimal(0);
     let iter = 0;
+    let temp;
 
-    while (x * x + y * y < 4 && iter < maxIterations) {
-      let xTemp = x * x - y * y + scaledX;
-      y = 2 * x * y + scaledY;
-      x = xTemp;
+    while (x.pow(2).plus(y.pow(2)).lt(4) && iter < maxIterations) {
+      temp = x.pow(2).minus(y.pow(2)).plus(scaledX);
+      y = x.times(y).times(2).plus(scaledY);
+      x = temp;
       iter++;
     }
     return iter;
@@ -221,12 +222,16 @@ export const sketch = (p5) => {
    * @return
    */
   const mandGetValFromNormalizedCoords = (xN, yN, panX, panY, zoom, maxIterations) => {
-    let x1 = 0.5 - panX + (xN - 0.5) / zoom;
-    let y1 = 0.5 - panY + (yN - 0.5) / zoom;
+    const center = Decimal(0.5);
+    let x1 = center.minus(panX).plus(Decimal(xN).minus(0.5).div(zoom));
+    let y1 = center.minus(panY).plus(Decimal(yN).minus(0.5).div(zoom));
     const {x, y} = mandGetDenormalizedCoords(x1, y1);
+
+    const m = mandGetVal(x, y, maxIterations);
+    console.log(m)
     return p5.state.isSmooth
       ? mandGetValSmooth(x, y, maxIterations)
-      : mandGetVal(x, y, maxIterations);
+      : m;
   }
 
   const genHilbertCoords = _.memoize((hilbertN) =>
