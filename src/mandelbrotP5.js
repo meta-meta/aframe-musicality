@@ -1,9 +1,5 @@
 import _ from 'lodash';
 
-const partialsCountMax = 16;
-
-
-
 
 /* TODO
 
@@ -15,7 +11,6 @@ const partialsCountMax = 16;
 * option to add a second cursor for stereo effects
 * alternate space-filling curves
 * keep cursor in same location when switching resolutions
-* change partialsCountMax
 * manual cursor
 * for hilbertN of 256 or 512, use the vals to fill an audio buffer and play the ~1 or ~5s of audio
 * utonal partials
@@ -35,6 +30,8 @@ export const initialState = {
   maxIters: 4096, // max number of steps to recurse the mandelbrot fn
   panX: -0.05,
   panY: 0,
+  partials: {/* partial: { amp, oscIdx } */}, // the collection is updated in setState but values within are changed in drawLoop directly
+  partialsCountMax: 16,
   isSmooth: false, // smooth technique https://iquilezles.org/www/articles/mset_smooth/mset_smooth.htm
   tick: 0, // updated in draw() bypasses setState
   tickDuration: 100,
@@ -77,37 +74,42 @@ export const initialState = {
   // ...{zoom: 12371177.464729108, panX: 0.04671008941233588, panY: 0.13656133340058238},
 };
 
-let partials = {/* partial: { amp, oscIdx } */};
 let audioCtx = new AudioContext();
+let oscs = [];
 
 const masterGain = audioCtx.createGain();
 window.masterGain = masterGain;
 masterGain.gain.value = 1;
 masterGain.connect(audioCtx.destination);
 
-const oscs = _.range(partialsCountMax).map(() => {
-  const osc = audioCtx.createOscillator();
-  osc.frequency.value = initialState.fundamentalFreq;
-  const gain = audioCtx.createGain();
-  gain.gain.value = 0;
-  osc.connect(gain);
-  gain.connect(masterGain);
-  osc.start();
-  return {osc, gain};
-})
-
-window.oscs = oscs;
 
 export const sketch = (p5) => {
   p5.state = initialState;
-
-
 
   /* Border size and color */
   const CURSOR_STROKE_COLOR_SEPARATION = 20;
   const CURSOR_ALPHA = 0.7;
   const STROKE_WEIGHT_COEF = 1;
   const STROKE_COLOR = 0;
+
+  const setupOscillators = () => {
+    oscs.forEach(({osc, gain}) =>
+    {
+      osc.stop();
+    }); // TODO: gain.disconnect?
+
+    oscs = _.range(p5.state.partialsCountMax).map(() => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0;
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start();
+      return {osc, gain};
+    });
+
+    window.oscs = oscs;
+  }
 
   //rotate/flip a quadrant appropriately
   const hilbGetRotatedVec = (n, v, rx, ry) => {
@@ -240,6 +242,7 @@ export const sketch = (p5) => {
       maxIters,
       panX,
       panY,
+      partialsCountMax,
       zoom,
     } = p5.state;
 
@@ -269,7 +272,11 @@ export const sketch = (p5) => {
       .dropWhile(n => f / n >= 2)
       .first());
 
-  const setFillColorForMandelbrotVal = ({m, p}, maxIters, isCursor = false) => {
+  const setFillColorForMandelbrotVal = ({m, p}, isCursor = false) => {
+    const {
+      maxIters,
+      partialsCountMax,
+    } = p5.state;
 
     const octMax = getPartialOfOctaveStart(partialsCountMax);
     const oct = getPartialOfOctaveStart(p);
@@ -296,7 +303,6 @@ export const sketch = (p5) => {
     const {
       hilbertN,
       hilbMand,
-      maxIters,
     } = state;
 
     const strokeWeight = getStrokeWeight(p5.width / 2);
@@ -306,7 +312,7 @@ export const sketch = (p5) => {
     const s = getSideLengthForLinearizedMap(hilbMand.length, p5.width / 4, p5.height);
 
     hilbMand.forEach((coordWithVal, d) => {
-      setFillColorForMandelbrotVal(coordWithVal, maxIters);
+      setFillColorForMandelbrotVal(coordWithVal);
 
       p5.push();
       {
@@ -363,22 +369,24 @@ export const sketch = (p5) => {
   const genAndDrawHilbertMandelbrot = () => {
     p5.background(32);
 
+    // fade out. this can probably move to partials _.each
     oscs.forEach(({gain}) => {
       gain.gain.cancelScheduledValues(audioCtx.currentTime);
       gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
     })
 
-    _.each(partials, ({decayTimerId, oscIdx, zeroGainTimerId}, partial) => {
-      clearTimeout(decayTimerId); // further delay the decay
-      clearTimeout(zeroGainTimerId); // don't reset amp to zero
-      oscs[oscIdx].osc.frequency.cancelScheduledValues(audioCtx.currentTime);
-      oscs[oscIdx].osc.frequency.linearRampToValueAtTime(partial * p5.state.fundamentalFreq, audioCtx.currentTime + 0.5);
-    });
+    if (oscs.length !== partialsCountMax) {
+      setupOscillators(); // TODO: fade out first
+    }
+
+    const {
+      fundamentalFreq,
+      partialsCountMax,
+    } = p5.state;
 
     const hilbMand = genHilbertMandelbrot();
 
-
-    partials = _(hilbMand)
+    const partials = _(hilbMand)
       .map(({p}) => p)
       .filter(_.identity) // maxIters (black) are set as p: 0
       .uniq()
@@ -388,12 +396,21 @@ export const sketch = (p5) => {
       .fromPairs()
       .value();
 
-    window.partials = partials;
-
-    console.log('partials', _.keys(partials))
+    // slide to new freqs if partials change
+    _.each(partials, ({decayTimerId, oscIdx, zeroGainTimerId}, partial) => {
+      clearTimeout(decayTimerId);
+      clearTimeout(zeroGainTimerId);
+      oscs[oscIdx].osc.frequency.cancelScheduledValues(audioCtx.currentTime);
+      oscs[oscIdx].osc.frequency.linearRampToValueAtTime(partial * fundamentalFreq, audioCtx.currentTime + 0.5);
+    });
 
     p5.setState(prevState => {
-      const nextState = {...prevState, hilbMand};
+      const nextState = {
+        ...prevState,
+        hilbMand,
+        isRegenNeeded: false,
+        partials,
+      };
       drawHilbertMandelbrot( p5.width / 2, p5.height, nextState);
       return nextState;
     });
@@ -405,7 +422,7 @@ export const sketch = (p5) => {
     const {hilbMand} = p5.state;
     const prevCoordAndVal = hilbMand[prevD];
 
-    setFillColorForMandelbrotVal(prevCoordAndVal, p5.state.maxIters);
+    setFillColorForMandelbrotVal(prevCoordAndVal);
     p5.stroke(STROKE_COLOR);
 
     p5.push();
@@ -433,7 +450,7 @@ export const sketch = (p5) => {
     p5.strokeWeight(strokeWeight);
     cursorErasePrev(hilbMand.length, sideLength, d);
     p5.stroke((CURSOR_STROKE_COLOR_SEPARATION * id) % 255, 0, 255);
-    setFillColorForMandelbrotVal(coordAndVal, p5.state.maxIters, true);
+    setFillColorForMandelbrotVal(coordAndVal, true);
 
     p5.push();
     {
@@ -457,6 +474,7 @@ export const sketch = (p5) => {
       exciteEnergy,
       exciteDuration,
       hilbMand,
+      partials,
       tick,
     } = p5.state;
 
@@ -497,6 +515,14 @@ export const sketch = (p5) => {
     }
   }
 
+  const partialsDraw = () => {
+    const h = p5.height;
+    const w = p5.width / 4;
+
+    // TODO draw the partials on the left side of screen
+
+  }
+
   p5.setup = () => {
     p5.createCanvas(p5._width, p5._height);
     p5.colorMode(p5.HSB);
@@ -513,7 +539,6 @@ export const sketch = (p5) => {
 
     if (isRegenNeeded) {
       genAndDrawHilbertMandelbrot();
-      p5.setState(prevState => ({...prevState, isRegenNeeded: false}));
     }
 
     const now = p5.millis();
