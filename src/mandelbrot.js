@@ -111,15 +111,21 @@ const Mandelbrot = () => {
   }, [sketchInstance]);
 
   return (
-    <div
-      ref={ref}
-      style={{
-        alignSelf: 'start',
-        background: 'radial-gradient(circle, rgba(74,153,117,1) 0%, rgba(188,148,233,0.6943726953672094) 100%)',
-        height: '50vw',
-        width: '100vw',
-      }}
-    />
+    <div>
+      <div
+        ref={ref}
+        style={{
+          alignSelf: 'start',
+          background: 'radial-gradient(circle, rgba(74,153,117,1) 0%, rgba(188,148,233,0.6943726953672094) 100%)',
+          height: '50vw',
+          width: '100vw',
+        }}
+      />
+
+      {sketchState.hilbertN}
+
+    </div>
+
    );
 };
 
