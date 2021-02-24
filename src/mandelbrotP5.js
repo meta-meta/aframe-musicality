@@ -271,7 +271,7 @@ export const sketch = (p5) => {
       .dropWhile(n => f / n >= 2)
       .first());
 
-  const setFillColorForMandelbrotVal = ({m, p}, isCursor = false) => {
+  const getColorForMandelbrotVal = ({m, p}, isCursor = false) => {
     const {
       maxIters,
       partialsCountMax,
@@ -288,7 +288,11 @@ export const sketch = (p5) => {
     const s = isCursor ? 0 : 255 - Math.pow(oct / octMax, 2) * 225  //(p / partialsCountMax) * 225;
     const b = m === maxIters ? 0 : 255;
 
-    p5.fill(h, s, b, isCursor ? CURSOR_ALPHA : 255);
+    return p5.color(h, s, b, isCursor ? CURSOR_ALPHA : 255);
+  };
+
+  const setFillColorForMandelbrotVal = (coordsWithVal, isCursor = false) => {
+    p5.fill(getColorForMandelbrotVal(coordsWithVal), isCursor);
   }
 
   const drawHilbertCoord = (w, h, hilbertCoord, hilbertN) => {
@@ -519,8 +523,6 @@ export const sketch = (p5) => {
     const w = p5.width / 4;
 
     p5.noStroke();
-    p5.fill(0);
-    p5.rect(0, 0, w, h);
 
     const { partials, partialsCountMax } = p5.state;
 
@@ -528,7 +530,12 @@ export const sketch = (p5) => {
       const barH = h / partialsCountMax;
       const y = h * ((p - 1) / partialsCountMax);
       const barW = oscs[oscIdx].gain.gain.value * w;
-      setFillColorForMandelbrotVal({ m: 1, p });
+
+      const c = getColorForMandelbrotVal({ m: 1, p})
+      p5.fill(p5.color(p5.hue(c), 255, 8));
+      p5.rect(0, y, w, barH);
+
+      p5.fill(c);
       p5.rect(0, y, barW, barH);
       p5.fill(255);
       p5.rect(targetAmp * w, y, 1, barH);
