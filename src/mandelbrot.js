@@ -124,14 +124,18 @@ const Mandelbrot = () => {
       }}
     />
 
-    <div style={{
-      background: "rgba(0,0,0,0.5)",
-      position: "absolute",
-      bottom: 66,
-      padding: 12,
-      left: 50,
-      // width: "100%"
-    }}>
+    <div
+      style={{
+        background: "rgba(0,0,0,0.5)",
+        position: "absolute",
+        bottom: 66,
+        padding: 12,
+        left: 50,
+        opacity: 0.5,
+      }}
+      onMouseEnter={ev => { ev.currentTarget.style.opacity = 1 }}
+      onMouseLeave={ev => { ev.currentTarget.style.opacity = 0.5 }}
+    >
         {sketchState.isPlaying ? "▶️" : "⏸"}
 
         <Slider
