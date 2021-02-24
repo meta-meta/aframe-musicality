@@ -125,16 +125,19 @@ const Mandelbrot = () => {
     />
 
     <div style={{
+      background: "rgba(0,0,0,0.5)",
       position: "absolute",
       bottom: 66,
       padding: 12,
-      width: "100%"
+      left: 50,
+      // width: "100%"
     }}>
         {sketchState.isPlaying ? "▶️" : "⏸"}
+
         <Slider
-          min={10}
-          max={8000}
-          stateKey={"decayDuration"}
+          min={16}
+          max={1000}
+          stateKey={"tickDuration"}
           sketchState={sketchState}
           setSketchState={setSketchState}
         />
@@ -146,6 +149,14 @@ const Mandelbrot = () => {
           setSketchState={setSketchState}
         />
         <Slider
+          min={10}
+          max={8000}
+          stateKey={"decayDuration"}
+          sketchState={sketchState}
+          setSketchState={setSketchState}
+        />
+
+        <Slider
           min={0.01}
           max={1}
           step={0.01}
@@ -156,6 +167,10 @@ const Mandelbrot = () => {
         <Slider
           min={0.1}
           max={500}
+          onMouseUp={() => {
+            console.log('onMouseUp');
+            sketchState.isRegenNeeded = true // TODO: isFreqChanged instead of full regen
+          }}
           step={0.1}
           stateKey={"fundamentalFreq"}
           sketchState={sketchState}
@@ -184,14 +199,12 @@ const Mandelbrot = () => {
           stateKey={"maxIters"}
           sketchState={sketchState}
           setSketchState={setSketchState}
+          onMouseUp={() => {
+            console.log('onMouseUp');
+            sketchState.isRegenNeeded = true
+          }}
         />
-        <Slider
-          min={16}
-          max={1000}
-          stateKey={"tickDuration"}
-          sketchState={sketchState}
-          setSketchState={setSketchState}
-        />
+
 
     </div>
    </>);
