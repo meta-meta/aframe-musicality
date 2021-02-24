@@ -3,7 +3,6 @@ import _ from 'lodash';
 
 /* TODO
 
-* visualize partials excitation
 * params bound to urlParams
 * option to auto-choose fundamentalFreq
   based on which partials are present
@@ -519,7 +518,21 @@ export const sketch = (p5) => {
     const h = p5.height;
     const w = p5.width / 4;
 
-    // TODO draw the partials on the left side of screen
+    p5.noStroke();
+    p5.fill(0);
+    p5.rect(0, 0, w, h);
+
+    const { partials, partialsCountMax } = p5.state;
+
+    _.each(partials, ({ amp: targetAmp, oscIdx }, p) => {
+      const barH = h / partialsCountMax;
+      const y = h * ((p - 1) / partialsCountMax);
+      const barW = oscs[oscIdx].gain.gain.value * w;
+      setFillColorForMandelbrotVal({ m: 1, p });
+      p5.rect(0, y, barW, barH);
+      p5.fill(255);
+      p5.rect(targetAmp * w, y, 1, barH);
+    })
 
   }
 
@@ -553,6 +566,8 @@ export const sketch = (p5) => {
       p5.state.tick++;
       p5.state.tickLastMillis = now;
     }
+
+    partialsDraw();
   }
 
   /**
