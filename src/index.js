@@ -51,7 +51,7 @@ const App = () => {
             active: '#660000',
           },
           primary: {
-            main: '#440044'
+            main: '#330033'
           },
           type: prefersDarkMode ? 'dark' : 'light',
         },
@@ -77,6 +77,7 @@ const App = () => {
         ))}
 
         <AppBar
+          color="transparent"
           position="fixed"
           style={{
             top: 'auto',

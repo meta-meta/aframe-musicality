@@ -21,9 +21,10 @@ export const initialState = {
   decayDuration: 5000,
   exciteEnergy: 0.05,
   exciteDuration: 1000,
-  fundamentalFreq: 40,
+  fundamentalFreq: 200,
   hilbertN: 64, // hilbertN must be power of 2 in order to be square
   hilbMand: [/*{ x, y, m }*/], // coordinates and associated mandelbrot val in hilbert traversal order
+  isControlPanelOpen: true,
   isPlaying: false,
   isRegenNeeded: true,
   maxIters: 4096, // max number of steps to recurse the mandelbrot fn
@@ -292,7 +293,7 @@ export const sketch = (p5) => {
   };
 
   const setFillColorForMandelbrotVal = (coordsWithVal, isCursor = false) => {
-    p5.fill(getColorForMandelbrotVal(coordsWithVal), isCursor);
+    p5.fill(getColorForMandelbrotVal(coordsWithVal, isCursor));
   }
 
   const drawHilbertCoord = (w, h, hilbertCoord, hilbertN) => {
@@ -465,7 +466,6 @@ export const sketch = (p5) => {
     p5.push();
     {
       p5.translate((p5.width / 4) * 3, 0);
-      p5.strokeWeight(strokeWeight);
       drawLinearizedMandelbrotCoord(p5.width / 4, sideLength, d);
     }
     p5.pop();
@@ -543,9 +543,38 @@ export const sketch = (p5) => {
 
   }
 
+  let wasPaused = true;
+  const pauseScreenDraw = () => {
+    if (!p5.state.isPlaying && !p5.state.isControlPanelOpen) {
+      wasPaused = true;
+      p5.background(0, 0.1);
+      p5.noFill();
+      p5.stroke(192, 127, 90);
+      p5.textSize(10);
+      p5.text('arrow keys to move', 0, p5.height / 2 - 50, p5.width, p5.height);
+      p5.text('shift+arrow for zoom/resolution', 0, p5.height / 2 - 35, p5.width, p5.height);
+      p5.text('shift+spacebar toggle controls', 0, p5.height / 2 - 20, p5.width, p5.height);
+      p5.textSize(20);
+      p5.textAlign(p5.CENTER);
+      p5.text('spacebar to start', 0, p5.height / 2, p5.width, p5.height);
+    } else {
+      if (wasPaused) {
+        partialsDraw();
+        drawHilbertMandelbrot(p5.width / 2, p5.height, p5.state);
+        wasPaused = false;
+      }
+    }
+  }
+
+  let font;
+  p5.preload = () => {
+    font = p5.loadFont('JetBrainsMono-Regular.ttf');
+  }
+
   p5.setup = () => {
     p5.createCanvas(p5._width, p5._height);
     p5.colorMode(p5.HSB);
+    p5.textFont(font);
   }
 
   p5.draw = () => {
@@ -559,6 +588,8 @@ export const sketch = (p5) => {
     if (isRegenNeeded) {
       genAndDrawHilbertMandelbrot();
     }
+
+
 
     const now = p5.millis();
 
@@ -577,20 +608,28 @@ export const sketch = (p5) => {
       p5.state.tickLastMillis = now;
     }
 
-    partialsDraw();
+    if (isPlaying) partialsDraw();
+
+    pauseScreenDraw();
   }
 
   /**
    * This needs to be called by a user event handler.
    * @param isPlaying
    */
-  p5.toggleAudio = (isPlaying) => {
-    if (isPlaying && audioCtx.state !== 'running') {
-      audioCtx.resume();
-    }
+  p5.toggleAudio = () => {
+    p5.setState(prevState => {
+      const { isPlaying } = prevState;
+      if (!isPlaying && audioCtx.state !== 'running') {
+        audioCtx.resume();
+      }
 
-    if (!isPlaying && audioCtx.state === 'running') {
-      audioCtx.suspend();
-    }
+      if (isPlaying && audioCtx.state === 'running') {
+        audioCtx.suspend();
+      }
+
+      return { ...prevState, isPlaying: !prevState.isPlaying };
+    });
+
   }
 }

@@ -1,7 +1,30 @@
 import _ from 'lodash';
 import P5 from 'p5';
+
+import KeyboardArrowUpOutlinedIcon from '@material-ui/icons/KeyboardArrowUpOutlined';
+import KeyboardArrowDownOutlinedIcon from '@material-ui/icons/KeyboardArrowDownOutlined';
+import KeyboardArrowLeftOutlinedIcon from '@material-ui/icons/KeyboardArrowLeftOutlined';
+import KeyboardArrowRightOutlinedIcon from '@material-ui/icons/KeyboardArrowRightOutlined';
+import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
+import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
+import ViewComfyOutlinedIcon from '@material-ui/icons/ViewComfyOutlined';
+import ViewModuleOutlinedIcon from '@material-ui/icons/ViewModuleOutlined';
+import ZoomInOutlinedIcon from '@material-ui/icons/ZoomInOutlined';
+import ZoomOutOutlinedIcon from '@material-ui/icons/ZoomOutOutlined';
+
+
 import React, {useCallback, useEffect, useState} from 'react';
+import TuneIcon from '@material-ui/icons/Tune';
 import { initialState, sketch } from "./mandelbrotP5";
+import { makeStyles } from '@material-ui/core/styles';
+import {Button, ButtonGroup, Drawer} from '@material-ui/core';
+
+const useStyles = makeStyles({
+  paper: {
+    background: "rgba(0,0,0,0.7)",
+    paddingBottom: 65,
+  }
+});
 
 const useP5 = (sketch) => {
   const [sketchState, setSketchState] = useState(initialState);
@@ -45,42 +68,27 @@ const useP5 = (sketch) => {
   };
 }
 
-const handleKeyDown = (setSketchState, sketchInstance) => (evt) => {
-  // console.log(evt);
-  const {code, shiftKey, key} = evt;
-  if (_.includes(['Control', 'Shift'], key)) return;
+const getHandleAction = (sketchInstance) => (action) => () => {
+  if (action === 'toggleAudio') {
+    sketchInstance.toggleAudio();
+    return;
+  }
 
-  setSketchState(prevState => {
-    const {hilbertN, isPlaying, panX, panY, zoom} = prevState;
+  sketchInstance.setState(prevState => {
+    const {hilbertN, isControlPanelOpen, panX, panY, zoom} = prevState;
     const panDelta = 0.1 / zoom;
 
-    if (code === 'Space') {
-      sketchInstance.toggleAudio(!isPlaying);
-      return { ...prevState, isPlaying: !isPlaying}
-    }
-
     const nextState = {
-      ...key === 'ArrowLeft'
-        ? shiftKey
-          ? {hilbertN: Math.pow(2, Math.log2(hilbertN) - 1)}
-          : {panX: panX + panDelta}
-        : {},
-      ...key === 'ArrowRight'
-        ? shiftKey
-          ? {hilbertN: Math.min(256, Math.pow(2, Math.log2(hilbertN) + 1))}
-          : {panX: panX - panDelta}
-        : {},
-      ...key === 'ArrowUp'
-        ? shiftKey
-          ? {zoom: zoom * (10 / 9)}
-          : {panY: panY + panDelta}
-        : {},
-      ...key === 'ArrowDown'
-        ? shiftKey
-          ? {zoom: zoom * (9 / 10)}
-          : {panY: panY - panDelta}
-        : {},
-    };
+      moveLeft: {panX: panX + panDelta},
+      moveRight: {panX: panX - panDelta},
+      moveUp: {panY: panY + panDelta},
+      moveDown: {panY: panY - panDelta},
+      resDec: {hilbertN: Math.pow(2, Math.log2(hilbertN) - 1)},
+      resInc: {hilbertN: Math.min(256, Math.pow(2, Math.log2(hilbertN) + 1))},
+      toggleControlPanel: {isControlPanelOpen: !isControlPanelOpen},
+      zoomIn: {zoom: zoom * (10 / 9)},
+      zoomOut: {zoom: zoom * (9 / 10)},
+    }[action];
 
     return {
       ...prevState,
@@ -88,7 +96,25 @@ const handleKeyDown = (setSketchState, sketchInstance) => (evt) => {
       isRegenNeeded: !_.isEmpty(nextState),
     };
   })
+};
 
+const handleKeyDown = (handleAction) => (evt) => {
+  // console.log(evt);
+  const {code, shiftKey, key} = evt;
+
+  if (code === 'Space') {
+    handleAction(shiftKey ? 'toggleControlPanel' : 'toggleAudio')();
+    return;
+  }
+
+  const getAction = {
+    'ArrowDown': () => shiftKey ? 'zoomOut' : 'moveDown',
+    'ArrowLeft': () => shiftKey ? 'resDec' : 'moveLeft',
+    'ArrowRight': () => shiftKey ? 'resInc' : 'moveRight',
+    'ArrowUp': () => shiftKey ? 'zoomIn' : 'moveUp',
+  }[key];
+
+  if (getAction) handleAction(getAction())();
 };
 
 const Mandelbrot = () => {
@@ -101,16 +127,18 @@ const Mandelbrot = () => {
 
   window.sketchInstance = sketchInstance;
 
+  const handleAction = getHandleAction(sketchInstance);
+
   useEffect(() => {
+    document.title = 'Mandelbrot Muse';
     if (sketchInstance) {
-      const handler = handleKeyDown(setSketchState, sketchInstance);
+      const handler = handleKeyDown(handleAction);
       window.addEventListener('keydown', handler)
       return () => { // cleanup
         window.removeEventListener('keydown', handler);
       };
     }
   }, [sketchInstance]);
-
 
   return (<>
     <div
@@ -124,14 +152,77 @@ const Mandelbrot = () => {
     />
 
     <div style={{
-      background: "rgba(0,0,0,0.5)",
-      position: "absolute",
-      bottom: 66,
-      padding: 12,
-      left: 50,
-      // width: "100%"
+      bottom: 0,
+      padding: 0,
+      position: 'absolute',
+      textAlign: 'center',
+      zIndex: 1000000,
     }}>
-        {sketchState.isPlaying ? "▶️" : "⏸"}
+      {!sketchState.isControlPanelOpen && (
+        <Button onClick={handleAction('toggleControlPanel')}>
+          show
+          <TuneIcon/>
+          controls
+        </Button>
+      )}
+
+      <Drawer
+        anchor="bottom"
+        classes={useStyles()}
+        color="transparent"
+        open={sketchState.isControlPanelOpen}
+        onClose={handleAction('toggleControlPanel')}
+        variant="persistent"
+      >
+
+
+        <ButtonGroup fullWidth size="large">
+          <Button onClick={handleAction('toggleAudio')}>
+            {!sketchState.isPlaying ? <PlayCircleOutlineIcon /> : <PauseCircleOutlineIcon />}
+          </Button>
+
+          <Button onClick={handleAction('toggleControlPanel')}>
+            hide controls
+          </Button>
+        </ButtonGroup>
+
+        <ButtonGroup fullWidth size="large">
+          <Button onClick={handleAction('moveUp')}>
+            <KeyboardArrowUpOutlinedIcon/>
+          </Button>
+
+          <Button onClick={handleAction('moveLeft')}>
+            <KeyboardArrowLeftOutlinedIcon/>
+          </Button>
+
+          <Button onClick={handleAction('moveRight')}>
+            <KeyboardArrowRightOutlinedIcon/>
+          </Button>
+
+          <Button onClick={handleAction('zoomIn')}>
+            <ZoomInOutlinedIcon/>
+          </Button>
+
+        </ButtonGroup>
+
+        <ButtonGroup fullWidth size="large">
+          <Button onClick={handleAction('moveDown')}>
+            <KeyboardArrowDownOutlinedIcon/>
+          </Button>
+
+          <Button onClick={handleAction('resDec')}>
+            <ViewModuleOutlinedIcon/>
+          </Button>
+
+          <Button onClick={handleAction('resInc')}>
+            <ViewComfyOutlinedIcon/>
+          </Button>
+
+          <Button onClick={handleAction('zoomOut')}>
+            <ZoomOutOutlinedIcon/>
+          </Button>
+
+        </ButtonGroup>
 
         <Slider
           min={16}
@@ -166,8 +257,8 @@ const Mandelbrot = () => {
         <Slider
           min={0.1}
           max={500}
-          onMouseUp={() => {
-            console.log('onMouseUp');
+          onPointerUp={() => {
+            console.log('onPointerUp');
             sketchState.isRegenNeeded = true // TODO: isFreqChanged instead of full regen
           }}
           step={0.1}
@@ -186,10 +277,10 @@ const Mandelbrot = () => {
           //   sketchState.isRegenNeeded = true
           // // console.log('sketchState.isRegenNeeded:', sketchState.isRegenNeeded)
           // }}
-          onMouseUp={() => {
-            console.log('onMouseUp');
+          onPointerUp={() => {
+            console.log('onPointerUp');
             sketchState.isRegenNeeded = true
-          // console.log('sketchState.isRegenNeeded:', sketchState.isRegenNeeded)
+            // console.log('sketchState.isRegenNeeded:', sketchState.isRegenNeeded)
           }}
         />
         <Slider
@@ -198,11 +289,12 @@ const Mandelbrot = () => {
           stateKey={"maxIters"}
           sketchState={sketchState}
           setSketchState={setSketchState}
-          onMouseUp={() => {
-            console.log('onMouseUp');
+          onPointerUp={() => {
+            console.log('onPointerUp');
             sketchState.isRegenNeeded = true
           }}
         />
+      </Drawer>
 
 
     </div>
