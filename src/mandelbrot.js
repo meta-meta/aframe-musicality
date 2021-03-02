@@ -173,6 +173,9 @@ const Mandelbrot = () => {
         open={sketchState.isControlPanelOpen}
         onClose={handleAction('toggleControlPanel')}
         variant="persistent"
+
+        // onMouseEnter={ev => { ev.currentTarget.style.opacity = 1 }}
+        // onMouseLeave={ev => { ev.currentTarget.style.opacity = 0.5 }}
       >
 
 
