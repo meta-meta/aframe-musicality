@@ -14,7 +14,6 @@ const useP5 = (sketch) => {
   }
 
   const ref = useCallback((el) => {
-    console.log('useCallback')
     if (el) {
       const instance = new P5(sketch, el);
       setSketchInstance(instance);
@@ -30,10 +29,11 @@ const useP5 = (sketch) => {
       const resizeObserver = new ResizeObserver(([{contentRect: {height, width}}]) => {
         resize(width, height);
       });
+
       setResizeObserver(resizeObserver);
       resizeObserver.observe(el);
     } else {
-      resizeObserver.disconnect();
+      if (resizeObserver) resizeObserver.disconnect();
     }
   }, []);
 
@@ -46,7 +46,7 @@ const useP5 = (sketch) => {
 }
 
 const handleKeyDown = (setSketchState, sketchInstance) => (evt) => {
-  console.log(evt);
+  // console.log(evt);
   const {code, shiftKey, key} = evt;
   if (_.includes(['Control', 'Shift'], key)) return;
 
@@ -111,7 +111,6 @@ const Mandelbrot = () => {
     }
   }, [sketchInstance]);
 
-  
 
   return (<>
     <div

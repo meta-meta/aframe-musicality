@@ -25,7 +25,7 @@ export const initialState = {
   hilbertN: 64, // hilbertN must be power of 2 in order to be square
   hilbMand: [/*{ x, y, m }*/], // coordinates and associated mandelbrot val in hilbert traversal order
   isPlaying: false,
-  isRegenNeeded: false,
+  isRegenNeeded: true,
   maxIters: 4096, // max number of steps to recurse the mandelbrot fn
   panX: -0.05,
   panY: 0,
@@ -546,7 +546,6 @@ export const sketch = (p5) => {
   p5.setup = () => {
     p5.createCanvas(p5._width, p5._height);
     p5.colorMode(p5.HSB);
-    genAndDrawHilbertMandelbrot();
   }
 
   p5.draw = () => {
@@ -562,6 +561,10 @@ export const sketch = (p5) => {
     }
 
     const now = p5.millis();
+
+    // console.log(!isRegenNeeded,
+    //   isPlaying,
+    //   now > tickLastMillis + tickDuration)
 
     if (_.every([
       !isRegenNeeded,
