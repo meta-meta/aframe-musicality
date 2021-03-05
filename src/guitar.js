@@ -5,6 +5,11 @@ import React from 'react';
 
 const frets = [0,5,7,12,15,17,19, 24];
 
+let standardTuning = [4, 9, 2, 7, 11, 4].reverse();
+const chelseaSessionsTuning = [0, 5, 0, 5, 9, 5].reverse();
+const octoberSongTuning = [0, 7, 0, 4, 7, 0].reverse();
+
+
 const Guitar = () => (
   <div style={{
     display: 'block',
@@ -12,7 +17,7 @@ const Guitar = () => (
   }}>
     <FretMarkers frets={frets}/>
     <br/>
-    {[4, 11, 7, 2, 9, 4].map(pc0 => (
+    {standardTuning.map(pc0 => (
       <>
         {_.range(25)
           .map(i => (i + pc0) % 12)
