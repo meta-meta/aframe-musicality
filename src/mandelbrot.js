@@ -75,7 +75,14 @@ const getHandleAction = (sketchInstance) => (action) => () => {
   }
 
   sketchInstance.setState(prevState => {
-    const {hilbertN, isControlPanelOpen, panX, panY, zoom} = prevState;
+    const {
+      hilbertN,
+      isControlPanelOpen,
+      isRegenNeeded,
+      panX,
+      panY,
+      zoom,
+    } = prevState;
     const panDelta = 0.1 / zoom;
 
     const nextState = {
@@ -85,15 +92,15 @@ const getHandleAction = (sketchInstance) => (action) => () => {
       moveDown: {panY: panY - panDelta},
       resDec: {hilbertN: Math.pow(2, Math.log2(hilbertN) - 1)},
       resInc: {hilbertN: Math.min(256, Math.pow(2, Math.log2(hilbertN) + 1))},
-      toggleControlPanel: {isControlPanelOpen: !isControlPanelOpen},
+      toggleControlPanel: {isControlPanelOpen: !isControlPanelOpen, isRegenNeeded},
       zoomIn: {zoom: zoom * (10 / 9)},
       zoomOut: {zoom: zoom * (9 / 10)},
     }[action];
 
     return {
       ...prevState,
-      ...nextState,
       isRegenNeeded: !_.isEmpty(nextState),
+      ...nextState,
     };
   })
 };

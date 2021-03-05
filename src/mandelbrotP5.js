@@ -287,7 +287,10 @@ export const sketch = (p5) => {
 
     const h = 255 * Math.log2(p / oct);
     const s = isCursor ? 0 : 255 - Math.pow(oct / octMax, 2) * 225  //(p / partialsCountMax) * 225;
-    const b = m === maxIters ? 0 : 255;
+    const b = isCursor
+      ? 255
+      : m === maxIters ? 0
+        : 30 + Math.pow(oct / octMax, 2) * 225;
 
     return p5.color(h, s, b, isCursor ? CURSOR_ALPHA : 255);
   };
