@@ -1,5 +1,14 @@
+const fs = require('fs');
+const https = require('https');
 const OSC = require('osc-js');
 const os = require('os');
+
+const server = https.createServer({
+  host: '0.0.0.0',
+  cert: fs.readFileSync('./certificate.crt'),
+  key: fs.readFileSync('./privatekey.key')
+});
+
 // const { address } = os.networkInterfaces().Ethernet.find(({family}) => family === 'IPv4');
 
 const wsPort = 8080;
@@ -18,12 +27,13 @@ const osc = new OSC({
       port: 41235           // @param {number} Port of udp client for messaging
     },
     wsServer: {
-      host: '0.0.0.0',    // @param {string} Hostname of WebSocket server
-      port: wsPort            // @param {number} Port of WebSocket server
+      // host: '0.0.0.0',    // @param {string} Hostname of WebSocket server
+      // port: wsPort,            // @param {number} Port of WebSocket server
+      server, // FIXME: had to modify WebSocketServer plugin to accept this option. maybe ditch osc-js or fork it
     }
   })
 })
-
+server.listen(wsPort);
 osc.open() // start a WebSocket server on port 8080
 // console.log(`listening at ${address}`)
 console.log(`WS Port ${wsPort}`)

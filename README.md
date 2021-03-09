@@ -1,3 +1,13 @@
+## https:// and wss://
+
+https happens because of the contents of `.env`
+You will need a cert to connect to the secure osc server
+run `npm gen-cert`
+[install cert on windows](https://community.spiceworks.com/how_to/1839-installing-self-signed-ca-certificate-in-windows)
+
+webpack-dev-server might be using its own cert. It can be overwritten at `node_modules/webpack-dev-server/ssl/server.pem` which is a file that contains both the cert and the key. copy the contents of each to the one file.
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
