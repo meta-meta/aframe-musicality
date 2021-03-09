@@ -58,9 +58,34 @@
             background: black;
             color: white;
         }
+
+        div.a-enter-ar, div.a-enter-vr {
+            bottom: 20px;
+            font-family: jetBrainsMono;
+            font-size: 13px;
+            font-weight: 200;
+            line-height: 16px;
+            position: fixed;
+            right: 20px;
+            width: 100%;
+            z-index: 1000000;
+        }
+
+        div.a-enter-ar {
+            right: 80px;
+        }
+
+        #sceneContainer {
+            align-items: center;
+            display: flex;
+            height: 100vh;
+            justify-content: center;
+            overflow: hidden;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
-    <div id="sceneContainer" style="height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;"></div>
+    <div id="sceneContainer"></div>
 </body>
 </html>
