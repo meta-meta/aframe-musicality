@@ -1,4 +1,5 @@
 import 'aframe-touch-look-controls';
+import Camera from './camera';
 import ColtraneCircle from "./coltraneCircle";
 import Dod from './dod';
 import PitchClassSpiral from "./pitchClassSpiral";
@@ -47,25 +48,7 @@ const VR = ({match: {path}}) => (
       width="2048"
     />
 
-    <Entity
-      primitive="a-camera"
-      id="camera"
-      position="0 0 0"
-      look-controls
-      // touch-look-controls={{
-      //   enabled: true,
-      // }}
-    >
-      <Entity
-        primitive="a-cursor"
-        animation__click={{
-          property: 'scale',
-          startEvents: 'click',
-          from: '0.1 0.1 0.1',
-          to: '1 1 1',
-          dur: 150,
-        }}/>
-    </Entity>
+    <Camera />
 
     <Entity
       // events={{}}
