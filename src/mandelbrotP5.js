@@ -2,17 +2,23 @@ import _ from 'lodash';
 
 
 /* TODO
+* high prio
+  * fine-tune freq
+  * don't require redraw on freq change
+  * params bound to urlParams
+  * option to auto-choose fundamentalFreq
+    based on which partials are present
+    to center around 500 - 1000hz
 
-* params bound to urlParams
-* option to auto-choose fundamentalFreq
-  based on which partials are present
-  to center around 500 - 1000hz
-* option to add a second cursor for stereo effects
-* alternate space-filling curves
-* keep cursor in same location when switching resolutions
-* manual cursor
-* for hilbertN of 256 or 512, use the vals to fill an audio buffer and play the ~1 or ~5s of audio
-* utonal partials
+* med prio
+  * for hilbertN of 256 or 512, use the vals to fill an audio buffer and play the ~1 or ~5s of audio
+  * utonal partials
+
+* low prio
+  * option to add a second cursor for stereo effects
+  * alternate space-filling curves
+  * keep cursor in same location when switching resolutions
+  * manual cursor
 * */
 
 

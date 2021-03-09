@@ -7,7 +7,7 @@ import Guitar from './guitar';
 import Intro from './intro';
 import MultTableMod12 from './multTableMod12';
 import NumpadMod12 from './numpadMod12';
-import OSC from './osc';
+import OSC from 'osc-js';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Mandelbrot from './mandelbrot';
@@ -26,7 +26,53 @@ import {
 import {BrowserRouter as Router, Route, Link} from 'react-router-dom';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import {Menu as MenuIcon} from '@material-ui/icons';
+import _ from 'lodash';
 
+const doWhenAframeLoaded = () => {
+  if (typeof AFRAME === 'undefined') {
+    setTimeout(doWhenAframeLoaded, 100);
+    return;
+  }
+
+  const oscHost = {
+    host: window.location.hostname,
+    port: '8080',
+    secure: true,
+  };
+  const osc = new OSC({
+    plugin: new OSC.WebsocketClientPlugin(oscHost),
+  });
+  osc.open();
+  window.osc = osc;
+
+  // window.sendOsc = (address, ...args) => osc.send(new OSC.Message(address, ...args));
+
+  // osc.on('/midiSeq/clear', () => clearSeq());
+
+  // osc.on('/midiSeq/beat', ({args: [beat]}) => setBeat(beat));
+
+
+  window.AFRAME.registerComponent('osc', {
+    init: function() {
+      // this.onOsc = (i, e) => {};
+
+      this._onOscId = osc.on('/midi/*', ({address, args: [note, vel]}) => {
+        const instrument = _.last(address.split('/'));
+        if (this.onOsc) this.onOsc({ instrument, note, vel });
+      });
+
+    },
+
+    tick: function (time, timeDelta) {
+      if (this.onTick) this.onTick(time, timeDelta);
+    },
+
+    remove: function() {
+      osc.off('/midi/*', this._onOscId);
+    },
+  });
+}
+doWhenAframeLoaded();
 
 const routes2d = [
   ['Mod12 Multiplication Tables', '/multTableMod12', MultTableMod12],
@@ -111,6 +157,7 @@ const App = () => {
               {[
                 ['Coltrane Circle', '/vr/coltrane'],
                 ['Dod', '/vr/dod'],
+                ['PitchClassSpiral', '/vr/pitchClassSpiral'],
               ].map(([title, url], idx) => (
                 <MenuItem key={idx}>
                   <Link style={{ color: 'cyan'}} onClick={handleMenuClose} to={url}>{title}</Link>
