@@ -1,4 +1,4 @@
-import * as Tone from 'tone'
+// import * as Tone from 'tone'
 import _ from 'lodash';
 import PitchClass from './pitchClass';
 import PitchDetector from 'pitchdetect';
@@ -7,7 +7,9 @@ import useMidi from "./useMidi";
 import {Entity} from 'aframe-react';
 import {HSVtoHex} from "./color";
 
-window.Tone = Tone;
+// window.Tone = Tone;
+
+const audioContext = new AudioContext();
 
 // ripped from Tone/core/Conversions
 const ftomf = (frequency) => {
@@ -37,12 +39,13 @@ const PitchClassSpiral = ({
   };
 
   useEffect(() => {
-    const toggle = ({key}) => {
+    const handleKeyup = ({code, key}) => {
       if (key === 'r') setIs180(is180 => !is180);
+      if (code === 'Space') audioContext.resume();
     };
 
-    window.addEventListener('keyup', toggle);
-    return () => window.removeEventListener('keyup', toggle);
+    window.addEventListener('keyup', handleKeyup);
+    return () => window.removeEventListener('keyup', handleKeyup);
   }, []);
 
 
@@ -52,7 +55,7 @@ const PitchClassSpiral = ({
     if (el) {
       detector = new PitchDetector({
         // Audio Context (Required)
-        context: new AudioContext(),
+        context: audioContext,
 
         // Input AudioNode (Required)
         // input: audioBufferNode, // default: Microphone input
@@ -147,7 +150,7 @@ const PitchClassSpiral = ({
   // TODO: position by freq, not 12TET pitch
 
   return (// https://www.npmjs.com/package/aframe-animation-component
-    <Entity position={{x: 0, y: 0, z: -2}} scale={{x: 4, y: 4, z: 4}}>
+    <Entity events={{ click: () => audioContext.resume()}} position={{x: 0, y: 0, z: -6}} scale={{x: 4, y: 4, z: 4}}>
       {_.range(noteRange[0], noteRange[1] + 1)
         .map(noteToDimensions)
         .map(({n, s, x, y, z}) => (
