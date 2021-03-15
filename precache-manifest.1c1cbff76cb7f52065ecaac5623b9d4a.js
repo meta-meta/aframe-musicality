@@ -1,7 +1,7 @@
 self.__precacheManifest = [
   {
-    "revision": "77f70646df44c218512e",
-    "url": "/aframe-musicality/static/js/main.63eb5e5b.chunk.js"
+    "revision": "2394343206bf258fc999",
+    "url": "/aframe-musicality/static/js/main.301a4ac4.chunk.js"
   },
   {
     "revision": "94355ca965158cfac0f3",
@@ -12,7 +12,7 @@ self.__precacheManifest = [
     "url": "/aframe-musicality/static/js/2.8ec22068.chunk.js"
   },
   {
-    "revision": "51996b7c1b593b844fb601c449ce5fab",
+    "revision": "32ef9060cf50d17b11d5ee585277e7cd",
     "url": "/aframe-musicality/index.html"
   }
 ];
