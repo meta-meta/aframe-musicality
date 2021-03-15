@@ -1,8 +1,18 @@
+import * as Tone from 'tone'
 import _ from 'lodash';
 import PitchClass from './pitchClass';
-import React, {useEffect, useState} from 'react';
+import PitchDetector from 'pitchdetect';
+import React, {useCallback, useEffect, useState} from 'react';
 import useMidi from "./useMidi";
 import {Entity} from 'aframe-react';
+import {HSVtoHex} from "./color";
+
+window.Tone = Tone;
+
+// ripped from Tone/core/Conversions
+const ftomf = (frequency) => {
+  return 69 + 12 * Math.log2(frequency / 440);
+}
 
 const PitchClassSpiral = ({
                             depthMax = 1,
@@ -13,6 +23,19 @@ const PitchClassSpiral = ({
                           }) => {
   const [is180, setIs180] = useState(true);
 
+  const noteToDimensions = n => {
+    const step = n / 128;
+    const r = rMax - rMax * step;
+
+    return {
+      n,
+      s: 0.75 - n / 192,
+      x: r * (is180 && isAlwaysCounterClockwise ? -1 : 1) * Math.sin(n * Math.PI / 6 + 0.01), // +0.01 to fix floating point error in animation library
+      y: r * Math.cos(n * Math.PI / 6 + 0.01),
+      z: is180 ? depthMax - depthMax * step : depthMax * step,
+    };
+  };
+
   useEffect(() => {
     const toggle = ({key}) => {
       if (key === 'r') setIs180(is180 => !is180);
@@ -20,6 +43,95 @@ const PitchClassSpiral = ({
 
     window.addEventListener('keyup', toggle);
     return () => window.removeEventListener('keyup', toggle);
+  }, []);
+
+
+  const ref = useCallback((el) => {
+    let detector;
+
+    if (el) {
+      detector = new PitchDetector({
+        // Audio Context (Required)
+        context: new AudioContext(),
+
+        // Input AudioNode (Required)
+        // input: audioBufferNode, // default: Microphone input
+
+        // Output AudioNode (Optional)
+        // output: AudioNode, // default: no output
+
+        // interpolate frequency (Optional)
+        //
+        // Auto-correlation is calculated for different (discrete) signal periods
+        // The true frequency is often in-beween two periods.
+        //
+        // We can interpolate (very hacky) by looking at neighbours of the best
+        // auto-correlation period and shifting the frequency a bit towards the
+        // highest neighbour.
+        interpolateFrequency: true, // default: true
+
+        // Callback on pitch detection (Optional)
+        onDetect: function(stats, pitchDetector) {
+          const { frequency, detected, rms } = stats;
+
+          const { s, x, y, z } = noteToDimensions(ftomf(frequency));
+          el.setAttribute('material', 'opacity', rms);
+          el.object3D.position.set(x, y, z);
+          el.object3D.scale.set(s * 1.5, s * 1.5, s * 1.5);
+
+
+          // console.log(Tone.FrequencyClass.ftom(frequency), detected, rms);
+          // stats.frequency // 440
+          // stats.detected // --> true
+          // stats.worst_correlation // 0.03 - local minimum, not global minimum!
+          // stats.best_correlation // 0.98
+          // stats.worst_period // 80
+          // stats.best_period // 100
+          // stats.time // 2.2332 - audioContext.currentTime
+          // stats.rms // 0.02
+        },
+
+        // Debug Callback for visualisation (Optional)
+        onDebug: function(stats, pitchDetector) { },
+
+        // Minimal signal strength (RMS, Optional)
+        minRms: 0.01,
+
+        // Detect pitch only with minimal correlation of: (Optional)
+        minCorrelation: 0.9,
+
+        // Detect pitch only if correlation increases with at least: (Optional)
+        minCorreationIncrease: 0.5,
+
+        // Note: you cannot use minCorrelation and minCorreationIncrease
+        // at the same time!
+
+        // Signal Normalization (Optional)
+        normalize: "rms", // or "peak". default: undefined
+
+        // Only detect pitch once: (Optional)
+        stopAfterDetection: false,
+
+        // Buffer length (Optional)
+        length: 1024, // default 1024
+
+        // Limit range (Optional):
+        minNote: 69, // by MIDI note number
+        maxNote: 80,
+
+        minFrequency: 440,    // by Frequency in Hz
+        maxFrequency: 20000,
+
+        minPeriod: 2,  // by period (i.e. actual distance of calculation in audio buffer)
+        maxPeriod: 512, // --> convert to frequency: frequency = sampleRate / period
+
+        // Start right away
+        start: true, // default: false
+      });
+    } else {
+      detector.stop();
+      detector.destroy();
+    }
   }, []);
 
   const [{midiIn}] = useMidi();
@@ -32,21 +144,12 @@ const PitchClassSpiral = ({
       .sum())
     .value();
 
-  return (// https://www.npmjs.com/package/aframe-animation-component
-    <Entity position={{x: 0, y: 0, z: -2}}>
-      {_.range(noteRange[0], noteRange[1] + 1)
-        .map(n => {
-          const step = n / 128;
-          const r = rMax - rMax * step;
+  // TODO: position by freq, not 12TET pitch
 
-          return {
-            n,
-            s: 0.75 - n / 192,
-            x: r * (is180 && isAlwaysCounterClockwise ? -1 : 1) * Math.sin(n * Math.PI / 6 + 0.01), // +0.01 to fix floating point error in animation library
-            y: r * Math.cos(n * Math.PI / 6 + 0.01),
-            z: is180 ? depthMax - depthMax * step : depthMax * step,
-          };
-        })
+  return (// https://www.npmjs.com/package/aframe-animation-component
+    <Entity position={{x: 0, y: 0, z: -2}} scale={{x: 4, y: 4, z: 4}}>
+      {_.range(noteRange[0], noteRange[1] + 1)
+        .map(noteToDimensions)
         .map(({n, s, x, y, z}) => (
           <PitchClass
             key={n}
@@ -55,6 +158,16 @@ const PitchClassSpiral = ({
             scale={{x: s, y: s, z: s}}
           />))
       }
+      <Entity
+        _ref={ref}
+        primitive='a-sphere'
+        material={{
+          blending: 'additive',
+          color: HSVtoHex(1, 0, 1),
+          opacity: 0,
+        }}
+        radius={0.1}
+      />
     </Entity>
   );
 };

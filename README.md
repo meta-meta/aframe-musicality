@@ -7,6 +7,11 @@ run `npm gen-cert`
 
 webpack-dev-server might be using its own cert. It can be overwritten at `node_modules/webpack-dev-server/ssl/server.pem` which is a file that contains both the cert and the key. copy the contents of each to the one file.
 
+## Interesting repos to incorporate
+
+* [JI Rational Comma Notation](https://github.com/davidryan59/ji-rcn)
+
+
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
