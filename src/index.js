@@ -11,6 +11,7 @@ import OSC from 'osc-js';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Mandelbrot from './mandelbrot';
+import Midi from './midi';
 import Staff from './staff';
 import Tonnetz from './tonnetz';
 import Ukulele from './ukulele';
@@ -51,6 +52,26 @@ const doWhenAframeLoaded = () => {
 
   // osc.on('/midiSeq/beat', ({args: [beat]}) => setBeat(beat));
 
+  // WIP
+  window.AFRAME.registerComponent('midi', {
+    init: function() {
+      // this.onOsc = (i, e) => {};
+
+      this._onOscId = osc.on('/midi/*', ({address, args: [note, vel]}) => {
+        const instrument = _.last(address.split('/'));
+        if (this.onOsc) this.onOsc({ instrument, note, vel });
+      });
+
+    },
+
+    tick: function (time, timeDelta) {
+      if (this.onTick) this.onTick(time, timeDelta);
+    },
+
+    remove: function() {
+      osc.off('/midi/*', this._onOscId);
+    },
+  });
 
   window.AFRAME.registerComponent('osc', {
     init: function() {
@@ -139,6 +160,7 @@ const App = () => {
             >
               <MenuIcon/>
             </IconButton>
+
             <Menu
               anchorEl={menuAnchorEl}
               open={!!menuAnchorEl}
@@ -164,6 +186,8 @@ const App = () => {
                 </MenuItem>
               ))}
             </Menu>
+
+            <Midi />
           </Toolbar>
         </AppBar>
       </Router>

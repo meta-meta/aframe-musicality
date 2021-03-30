@@ -9,6 +9,8 @@ import _ from 'lodash';
   * option to auto-choose fundamentalFreq
     based on which partials are present
     to center around 500 - 1000hz
+  * MIDI beat clock
+  * spiral of any length instead of hilbert
 
 * med prio
   * for hilbertN of 256 or 512, use the vals to fill an audio buffer and play the ~1 or ~5s of audio
@@ -34,6 +36,8 @@ export const initialState = {
   isPlaying: false,
   isRegenNeeded: true,
   maxIters: 4096, // max number of steps to recurse the mandelbrot fn
+  midiClock: 0,
+  midiClocksPerTick: 24,
   panX: -0.05,
   panY: 0,
   partials: {/* partial: { amp, oscIdx } */}, // the collection is updated in setState but values within are changed in drawLoop directly
@@ -430,10 +434,9 @@ export const sketch = (p5) => {
   }
 
 
-  const cursorErasePrev = (maxD, s, d) => {
-    const prevD = (maxD + d - 1) % maxD;
+  const cursorErasePrev = (maxD, s, prevD) => {
     const {hilbMand} = p5.state;
-    const prevCoordAndVal = hilbMand[prevD];
+    const prevCoordAndVal = hilbMand[prevD % maxD];
 
     setFillColorForMandelbrotVal(prevCoordAndVal);
     p5.stroke(STROKE_COLOR);
@@ -453,6 +456,7 @@ export const sketch = (p5) => {
     p5.pop();
   }
 
+  let prevD = 0;
   const cursorDraw = (id) => {
     const {hilbMand} = p5.state;
     const d = p5.state.tick % hilbMand.length;
@@ -461,7 +465,8 @@ export const sketch = (p5) => {
     const strokeWeight = getStrokeWeight(p5.width / 2);
 
     p5.strokeWeight(strokeWeight);
-    cursorErasePrev(hilbMand.length, sideLength, d);
+    cursorErasePrev(hilbMand.length, sideLength, prevD);
+    prevD = d; // maybe multiple ticks per frame when external time sync
     p5.stroke((CURSOR_STROKE_COLOR_SEPARATION * id) % 255, 0, 255);
     setFillColorForMandelbrotVal(coordAndVal, true);
 
@@ -586,35 +591,51 @@ export const sketch = (p5) => {
     p5.textFont(font);
   }
 
+  p5.incrementTick = (isExternal = false) => {
+    const now = p5.millis();
+    const {
+      isPlaying,
+      isRegenNeeded,
+      midiClocksPerTick,
+      tickDuration,
+      tickLastMillis,
+    } = p5.state;
+
+    if (isExternal) {
+      p5.state.midiClock++;
+    }
+    if (isExternal) console.log(p5.state.midiClock % midiClocksPerTick === 0)
+    const isReady = isPlaying && !isRegenNeeded && (isExternal
+      ? p5.state.midiClock % midiClocksPerTick === 0
+      : now > tickLastMillis + tickDuration);
+
+    if (isReady) {
+      p5.state.tick++;
+      p5.state.tickLastMillis = now;
+      cursorExcite(0);
+    }
+  }
+
+  let prevTick = 0;
   p5.draw = () => {
     const {
       isPlaying,
       isRegenNeeded,
-      tickDuration,
-      tickLastMillis,
     } = p5.state;
 
     if (isRegenNeeded) {
       genAndDrawHilbertMandelbrot();
     }
 
-
-
-    const now = p5.millis();
-
-    // console.log(!isRegenNeeded,
-    //   isPlaying,
-    //   now > tickLastMillis + tickDuration)
+    //fixme
+    // p5.incrementTick();
 
     if (_.every([
       !isRegenNeeded,
-      isPlaying,
-      now > tickLastMillis + tickDuration
+      p5.state.tick !== prevTick,
     ])) {
       cursorDraw(0);
-      cursorExcite(0);
-      p5.state.tick++;
-      p5.state.tickLastMillis = now;
+      prevTick = p5.state.tick;
     }
 
     if (isPlaying) partialsDraw();

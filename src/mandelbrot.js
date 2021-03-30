@@ -1,5 +1,11 @@
 import _ from 'lodash';
 import P5 from 'p5';
+import React, {useCallback, useEffect, useState} from 'react';
+import TuneIcon from '@material-ui/icons/Tune';
+import useMidi from "./useMidi";
+import { initialState, sketch } from "./mandelbrotP5";
+import { makeStyles } from '@material-ui/core/styles';
+import {Button, ButtonGroup, Drawer} from '@material-ui/core';
 
 import KeyboardArrowUpOutlinedIcon from '@material-ui/icons/KeyboardArrowUpOutlined';
 import KeyboardArrowDownOutlinedIcon from '@material-ui/icons/KeyboardArrowDownOutlined';
@@ -11,13 +17,6 @@ import ViewComfyOutlinedIcon from '@material-ui/icons/ViewComfyOutlined';
 import ViewModuleOutlinedIcon from '@material-ui/icons/ViewModuleOutlined';
 import ZoomInOutlinedIcon from '@material-ui/icons/ZoomInOutlined';
 import ZoomOutOutlinedIcon from '@material-ui/icons/ZoomOutOutlined';
-
-
-import React, {useCallback, useEffect, useState} from 'react';
-import TuneIcon from '@material-ui/icons/Tune';
-import { initialState, sketch } from "./mandelbrotP5";
-import { makeStyles } from '@material-ui/core/styles';
-import {Button, ButtonGroup, Drawer} from '@material-ui/core';
 
 const useStyles = makeStyles({
   paper: {
@@ -147,6 +146,29 @@ const Mandelbrot = () => {
     }
   }, [sketchInstance]);
 
+  const [{midiClockInDevice}, actions] = useMidi( // https://github.com/andregardi/use-global-hook#avoid-unnecessary-renders
+    ({midiClockInDevice}) => ({midiClockInDevice}),
+    actions => actions,
+  );
+
+  useEffect(() => {
+    const handleMidiClock = (evt) => {
+      if (sketchInstance) {
+        sketchInstance.incrementTick(true);
+      }
+    };
+
+    if (midiClockInDevice) {
+      midiClockInDevice.addListener('clock', 'all', handleMidiClock);
+    }
+
+    return () => {
+      if (midiClockInDevice) {
+        midiClockInDevice.removeListener('clock', 'all', handleMidiClock);
+      }
+    }
+  }, [midiClockInDevice]);
+
   return (<>
     <div
       ref={ref}
@@ -234,13 +256,24 @@ const Mandelbrot = () => {
 
         </ButtonGroup>
 
-        <Slider
-          min={16}
-          max={1000}
-          stateKey={"tickDuration"}
-          sketchState={sketchState}
-          setSketchState={setSketchState}
-        />
+        {midiClockInDevice ? (
+          <Slider
+            min={1}
+            max={1024}
+            stateKey={"midiClocksPerTick"}
+            sketchState={sketchState}
+            setSketchState={setSketchState}
+          />
+        ) : (
+          <Slider
+            min={16}
+            max={1000}
+            stateKey={"tickDuration"}
+            sketchState={sketchState}
+            setSketchState={setSketchState}
+          />
+        )}
+
         <Slider
           min={1}
           max={4000}
