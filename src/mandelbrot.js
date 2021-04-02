@@ -196,7 +196,7 @@ const Mandelbrot = () => {
       )}
 
       <Drawer
-        anchor="bottom"
+        anchor="top"
         classes={useStyles()}
         color="transparent"
         open={sketchState.isControlPanelOpen}

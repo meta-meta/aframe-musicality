@@ -31,10 +31,6 @@ const Midi = () => {
         actions.setInputDevices(WebMidi.inputs);
       }
     }, true);
-
-    window.addEventListener('keyup', ({ code }) => {
-      if (code === 'Space') actions.toggleMidiInSelector();
-    })
   }, []);
 
 
@@ -93,7 +89,7 @@ const Midi = () => {
         aria-label="open drawer"
         onClick={handleMidiMenuButtonClick(false)}
       >
-        <img src="/noun_MIDI_385872.svg" style={{ width: '2em', height: '2em'}} />
+        <img src="/noun_MIDI_385872.svg" style={{ width: '1.5em', height: '1.5em'}} />
       </IconButton>
 
       <IconButton
