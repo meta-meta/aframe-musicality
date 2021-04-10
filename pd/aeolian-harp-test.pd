@@ -1,0 +1,14 @@
+#N canvas 1228 712 450 476 24;
+#X obj 44 320 aeolian-harp 100;
+#X msg 33 71 1;
+#X msg 113 61 2;
+#X msg 184 63 4;
+#X msg 262 65 6;
+#X obj 89 148 s partial;
+#X floatatom 312 150 5 0 0 0 - - -;
+#X obj 295 233 s fund;
+#X connect 1 0 5 0;
+#X connect 2 0 5 0;
+#X connect 3 0 5 0;
+#X connect 4 0 5 0;
+#X connect 6 0 7 0;
