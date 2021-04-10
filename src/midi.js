@@ -81,7 +81,7 @@ const Midi = () => {
 
   };
 
-  return (
+  return ( // TODO: only show if MIDI devices present; use looser permission to query
     <>
       <IconButton
         edge="start"

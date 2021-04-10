@@ -11,6 +11,9 @@ import {HSVtoHex} from "./color";
 
 const audioContext = new AudioContext();
 
+// FIXME HACK
+window.audioContext = audioContext;
+
 // ripped from Tone/core/Conversions
 const ftomf = (frequency) => {
   return 69 + 12 * Math.log2(frequency / 440);
@@ -21,7 +24,7 @@ const PitchClassSpiral = ({
                             isAlwaysCounterClockwise = false,
                             rMax = 1,
                             rMin = 0.5,
-                            noteRange = [0, 128],
+                            noteRange = [24, 96],
                           }) => {
   const [is180, setIs180] = useState(true);
 
@@ -75,13 +78,16 @@ const PitchClassSpiral = ({
 
         // Callback on pitch detection (Optional)
         onDetect: function(stats, pitchDetector) {
-          const { frequency, detected, rms } = stats;
-
-          const { s, x, y, z } = noteToDimensions(ftomf(frequency));
-          el.setAttribute('material', 'opacity', rms);
-          el.object3D.position.set(x, y, z);
-          el.object3D.scale.set(s * 1.5, s * 1.5, s * 1.5);
-
+          // const { frequency, detected, rms } = stats;
+          //
+          // // https://math.stackexchange.com/q/57429/398343
+          // // const opacity = 1 - Math.exp(-2 * rms);
+          // const opacity = rms / (0.1 + rms);
+          //
+          // const { s, x, y, z } = noteToDimensions(ftomf(frequency));
+          // el.setAttribute('material', 'opacity', opacity);
+          // el.object3D.position.set(x, y, z + 0.01);
+          // el.object3D.scale.set(s * 1.5, s * 1.5, s * 1.5);
 
           // console.log(Tone.FrequencyClass.ftom(frequency), detected, rms);
           // stats.frequency // 440
@@ -95,10 +101,25 @@ const PitchClassSpiral = ({
         },
 
         // Debug Callback for visualisation (Optional)
-        onDebug: function(stats, pitchDetector) { },
+        onDebug: function(stats, pitchDetector) {
+          const { frequency, detected, rms } = stats;
+
+          // https://math.stackexchange.com/q/57429/398343
+          // const opacity = 1 - Math.exp(-2 * rms);
+          const opacity = rms / (0.1 + rms);
+
+          const { s, x, y, z } = noteToDimensions(ftomf(frequency));
+          el.setAttribute('material', 'opacity', opacity);
+          el.object3D.position.set(x, y, z + 0.01);
+          el.object3D.scale.set(s * 1.5, s * 1.5, s * 1.5);
+
+          if (!stats.detected) {
+            el.setAttribute('material', 'opacity', 0);
+          }
+        },
 
         // Minimal signal strength (RMS, Optional)
-        minRms: 0.01,
+        // minRms: 0.1,
 
         // Detect pitch only with minimal correlation of: (Optional)
         minCorrelation: 0.9,
@@ -116,14 +137,14 @@ const PitchClassSpiral = ({
         stopAfterDetection: false,
 
         // Buffer length (Optional)
-        length: 1024, // default 1024
+        length: 256, // default 1024
 
         // Limit range (Optional):
-        minNote: 69, // by MIDI note number
-        maxNote: 80,
+        minNote: 32, // by MIDI note number
+        maxNote: 96,
 
-        minFrequency: 440,    // by Frequency in Hz
-        maxFrequency: 20000,
+        // minFrequency: 440,    // by Frequency in Hz
+        // maxFrequency: 20000,
 
         minPeriod: 2,  // by period (i.e. actual distance of calculation in audio buffer)
         maxPeriod: 512, // --> convert to frequency: frequency = sampleRate / period
@@ -131,6 +152,8 @@ const PitchClassSpiral = ({
         // Start right away
         start: true, // default: false
       });
+
+      window.detector = detector;
     } else {
       detector.stop();
       detector.destroy();
@@ -150,7 +173,15 @@ const PitchClassSpiral = ({
   // TODO: position by freq, not 12TET pitch
 
   return (// https://www.npmjs.com/package/aframe-animation-component
-    <Entity events={{ click: () => audioContext.resume()}} position={{x: 0, y: 0, z: -6}} scale={{x: 4, y: 4, z: 4}}>
+    <Entity
+      events={{
+        click: () => {
+          audioContext.resume()
+        },
+      }}
+      position={{x: 0, y: 0, z: -6}}
+      scale={{x: 4, y: 4, z: 4}}
+    >
       {_.range(noteRange[0], noteRange[1] + 1)
         .map(noteToDimensions)
         .map(({n, s, x, y, z}) => (

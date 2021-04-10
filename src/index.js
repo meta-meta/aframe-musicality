@@ -145,6 +145,12 @@ const App = () => {
 
         <AppBar
           color="transparent"
+          onClick={() => {
+            // if (window.audioContext) { // FIXME HACK
+            //   window.audioContext.resume();
+            //   window.detector.start();
+            // }
+          }}
           position="fixed"
           style={{
             top: 'auto',
@@ -166,7 +172,7 @@ const App = () => {
               open={!!menuAnchorEl}
               onClose={handleMenuClose}
             >
-              <MenuItem >
+              <MenuItem>
                 <Link style={{ color: 'lightgrey'}} onClick={handleMenuClose} to="/">Introduction</Link>
               </MenuItem>
               <MenuItem disabled divider >2D</MenuItem>

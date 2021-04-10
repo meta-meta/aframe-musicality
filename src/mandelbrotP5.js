@@ -604,7 +604,7 @@ export const sketch = (p5) => {
     if (isExternal) {
       p5.state.midiClock++;
     }
-    if (isExternal) console.log(p5.state.midiClock % midiClocksPerTick === 0)
+
     const isReady = isPlaying && !isRegenNeeded && (isExternal
       ? p5.state.midiClock % midiClocksPerTick === 0
       : now > tickLastMillis + tickDuration);
@@ -621,14 +621,14 @@ export const sketch = (p5) => {
     const {
       isPlaying,
       isRegenNeeded,
+      midiClock,
     } = p5.state;
 
     if (isRegenNeeded) {
       genAndDrawHilbertMandelbrot();
     }
 
-    //fixme
-    // p5.incrementTick();
+    if (midiClock === 0) p5.incrementTick();
 
     if (_.every([
       !isRegenNeeded,
