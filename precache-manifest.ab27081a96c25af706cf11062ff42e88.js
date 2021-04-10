@@ -12,7 +12,7 @@ self.__precacheManifest = [
     "url": "/aframe-musicality/static/js/2.da21eb42.chunk.js"
   },
   {
-    "revision": "7983ada2c8bb391836fbad90e25e80c9",
+    "revision": "9436d10fba977fa784afd2c18f5365dd",
     "url": "/aframe-musicality/index.html"
   }
 ];
