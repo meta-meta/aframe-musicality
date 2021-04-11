@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import React, {useEffect} from 'react';
@@ -13,7 +14,8 @@ const Midi = () => {
       inputDevices,
       isMidiClockInSelectorOpen,
       isMidiInSelectorOpen,
-    }) => ({inputDevices, isMidiClockInSelectorOpen, isMidiInSelectorOpen}),
+      midiInDevice,
+    }) => ({inputDevices, isMidiClockInSelectorOpen, isMidiInSelectorOpen, midiInDevice}),
     actions => actions,
   );
 
@@ -21,6 +23,7 @@ const Midi = () => {
     inputDevices,
     isMidiClockInSelectorOpen,
     isMidiInSelectorOpen,
+    midiInDevice,
   } = state;
 
   useEffect(() => {
@@ -36,8 +39,7 @@ const Midi = () => {
 
   const handleMidi = (evt) => {
     const {note: {number: n}, rawVelocity: vel, type} = evt;
-
-    console.log(evt)
+    // console.log(evt)
     // actions.setMidiEvent({
     //   [n]: type === 'noteon' ? vel : 0
     // });
@@ -110,7 +112,9 @@ const Midi = () => {
         {inputDevices.map(({name}, idx) => (
           <MenuItem
             key={name}
-            onClick={handleMidiInputSelect(idx, isMidiClockInSelectorOpen)}>
+            onClick={handleMidiInputSelect(idx, isMidiClockInSelectorOpen)}
+            selected={isMidiInSelectorOpen && name === _.get(midiInDevice, 'name')}
+          >
             {name}
           </MenuItem>
         ))}

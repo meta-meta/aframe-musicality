@@ -14,8 +14,8 @@ const VR = ({match: {path}}) => (
     // fog={{type: 'linear', color: '#000', near: 1, far: 10}}
   >
     <a-assets>
-      <img id="groundTexture" src="https://cdn.aframe.io/a-painter/images/floor.jpg"/>
-      <img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg"/>
+      {/*<img id="groundTexture" src="https://cdn.aframe.io/a-painter/images/floor.jpg"/>*/}
+      {/*<img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg"/>*/}
     </a-assets>
 
     <Switch>
@@ -29,24 +29,24 @@ const VR = ({match: {path}}) => (
     {/*<Entity primitive="a-light" type="ambient" color="#445451"/>*/}
     {/*<Entity primitive="a-light" type="point" intensity="2" position="2 4 4"/>*/}
 
-    <Entity
-      height="2048"
-      primitive="a-sky"
-      radius="30"
-      rotation="90 0 0"
-      src="#skyTexture"
-      theta-length="90"
-      width="2048"
-    />
-    <Entity
-      height="2048"
-      primitive="a-sky"
-      radius="30"
-      rotation="90 0 180"
-      src="#skyTexture"
-      theta-length="90"
-      width="2048"
-    />
+    {/*<Entity*/}
+    {/*  height="2048"*/}
+    {/*  primitive="a-sky"*/}
+    {/*  radius="30"*/}
+    {/*  rotation="90 0 0"*/}
+    {/*  src="#skyTexture"*/}
+    {/*  theta-length="90"*/}
+    {/*  width="2048"*/}
+    {/*/>*/}
+    {/*<Entity*/}
+    {/*  height="2048"*/}
+    {/*  primitive="a-sky"*/}
+    {/*  radius="30"*/}
+    {/*  rotation="90 0 180"*/}
+    {/*  src="#skyTexture"*/}
+    {/*  theta-length="90"*/}
+    {/*  width="2048"*/}
+    {/*/>*/}
 
     <Camera />
 
