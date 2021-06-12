@@ -2,6 +2,7 @@ import 'aframe-touch-look-controls';
 import Camera from './camera';
 import ColtraneCircle from "./coltraneCircle";
 import Dod from './dod';
+import PitchClassCollections from "./pitchClassCollections";
 import PitchClassSpiral from "./pitchClassSpiral";
 import React from 'react';
 import {Entity, Scene} from 'aframe-react';
@@ -21,6 +22,7 @@ const VR = ({match: {path}}) => (
     <Switch>
       <Route path={`${path}/coltrane`} component={ColtraneCircle}/>
       <Route path={`${path}/dod`} component={Dod}/>
+      <Route path={`${path}/pitchClassCollections`} component={PitchClassCollections}/>
       <Route path={`${path}/pitchClassSpiral`} component={PitchClassSpiral}/>
     </Switch>
 

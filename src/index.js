@@ -137,7 +137,7 @@ const App = () => {
       <Router basename={process.env.PUBLIC_URL}>
         <Route path="/" exact component={Intro}/>
 
-        <Route path="/vr" render={(routerProps) => <VR {...routerProps} />}/>
+        <Route path="/vr" component={VR} />
 
         {routes2d.map(([title, path, component], key) => (
           <Route {...{ component, key, path }} />
@@ -185,6 +185,7 @@ const App = () => {
               {[
                 ['Coltrane Circle', '/vr/coltrane'],
                 ['Dod', '/vr/dod'],
+                ['PitchClassCollections', '/vr/pitchClassCollections'],
                 ['PitchClassSpiral', '/vr/pitchClassSpiral'],
               ].map(([title, url], idx) => (
                 <MenuItem key={idx}>
