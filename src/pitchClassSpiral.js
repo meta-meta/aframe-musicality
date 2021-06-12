@@ -1,43 +1,46 @@
-// import * as Tone from 'tone'
 import _ from 'lodash';
+import PcSpiralWindController from './pcSpiralWindController';
 import PitchClass from './pitchClass';
 import PitchDetector from 'pitchdetect';
 import React, {useCallback, useEffect, useState} from 'react';
 import useMidi from "./useMidi";
 import {Entity} from 'aframe-react';
+import {ftomf} from "./util";
 import {HSVtoHex} from "./color";
-
-// window.Tone = Tone;
 
 const audioContext = new AudioContext();
 
 // FIXME HACK
 window.audioContext = audioContext;
 
-// ripped from Tone/core/Conversions
-const ftomf = (frequency) => {
-  return 69 + 12 * Math.log2(frequency / 440);
-}
 
 const PitchClassSpiral = ({
-                            depthMax = 1,
-                            isAlwaysCounterClockwise = false,
-                            rMax = 1,
-                            rMin = 0.5,
-                            noteRange = [24, 96],
-                          }) => {
+  depthMax = 1,
+  isAlwaysCounterClockwise = false,
+  rMax = 0.75,
+  rMin = 0,
+  noteRange = [34, 99],
+  // notesHighlighted = [0, 2, 4, 5, 7, 9, 11],
+  pcsHighlighted= [0, 2, 4, 5, 7, 9, 11],
+}) => {
   const [is180, setIs180] = useState(true);
+  const [detector, setDetector] = useState();
+  const [pitchDetectEl, setPitchDetectEl] = useState();
+
+
 
   const noteToDimensions = n => {
     const step = n / 128;
-    const r = rMax - rMax * step;
+    const r = (is180 ? 1 : 1.5) * rMax - ((is180 ? 1 : 1.5) * rMax - rMin) * step;
 
     return {
       n,
-      s: 0.75 - n / 192,
+      s:  0.75 - n / 192,
       x: r * (is180 && isAlwaysCounterClockwise ? -1 : 1) * Math.sin(n * Math.PI / 6 + 0.01), // +0.01 to fix floating point error in animation library
       y: r * Math.cos(n * Math.PI / 6 + 0.01),
-      z: is180 ? depthMax - depthMax * step : depthMax * step,
+      z: is180
+        ? depthMax - depthMax * step
+        : depthMax * step,
     };
   };
 
@@ -51,81 +54,44 @@ const PitchClassSpiral = ({
     return () => window.removeEventListener('keyup', handleKeyup);
   }, []);
 
+  useEffect(() => {
+    console.log('el', pitchDetectEl, 'detector', detector);
 
-  const ref = useCallback((el) => {
-    let detector;
+    const handlePitch = (stats, pitchDetector) => {
+      const {frequency, detected, rms} = stats;
 
-    if (el) {
-      detector = new PitchDetector({
-        // Audio Context (Required)
+      // https://math.stackexchange.com/q/57429/398343
+      // const opacity = 1 - Math.exp(-2 * rms);
+      const opacity = rms / (0.1 + rms);
+      const n = ftomf(frequency);
+      const {s, x, y, z} = noteToDimensions(n);
+      pitchDetectEl.setAttribute('material', 'opacity', detected ? opacity : 0);
+      pitchDetectEl.object3D.position.set(x, y, z + 0.01);
+      pitchDetectEl.object3D.scale.set(s, s, s);
+
+      if (_.isFinite(n)) {
+        pitchDetectEl.setAttribute('material', 'color', HSVtoHex(n / 12, 0.5, 1));
+      }
+    };
+
+    if (audioContext && !detector && pitchDetectEl) {
+      setDetector(new PitchDetector({
         context: audioContext,
 
-        // Input AudioNode (Required)
         // input: audioBufferNode, // default: Microphone input
 
-        // Output AudioNode (Optional)
-        // output: AudioNode, // default: no output
-
-        // interpolate frequency (Optional)
-        //
-        // Auto-correlation is calculated for different (discrete) signal periods
-        // The true frequency is often in-beween two periods.
-        //
-        // We can interpolate (very hacky) by looking at neighbours of the best
-        // auto-correlation period and shifting the frequency a bit towards the
-        // highest neighbour.
         interpolateFrequency: true, // default: true
 
-        // Callback on pitch detection (Optional)
-        onDetect: function(stats, pitchDetector) {
-          // const { frequency, detected, rms } = stats;
-          //
-          // // https://math.stackexchange.com/q/57429/398343
-          // // const opacity = 1 - Math.exp(-2 * rms);
-          // const opacity = rms / (0.1 + rms);
-          //
-          // const { s, x, y, z } = noteToDimensions(ftomf(frequency));
-          // el.setAttribute('material', 'opacity', opacity);
-          // el.object3D.position.set(x, y, z + 0.01);
-          // el.object3D.scale.set(s * 1.5, s * 1.5, s * 1.5);
-
-          // console.log(Tone.FrequencyClass.ftom(frequency), detected, rms);
-          // stats.frequency // 440
-          // stats.detected // --> true
-          // stats.worst_correlation // 0.03 - local minimum, not global minimum!
-          // stats.best_correlation // 0.98
-          // stats.worst_period // 80
-          // stats.best_period // 100
-          // stats.time // 2.2332 - audioContext.currentTime
-          // stats.rms // 0.02
-        },
-
-        // Debug Callback for visualisation (Optional)
-        onDebug: function(stats, pitchDetector) {
-          const { frequency, detected, rms } = stats;
-
-          // https://math.stackexchange.com/q/57429/398343
-          // const opacity = 1 - Math.exp(-2 * rms);
-          const opacity = rms / (0.1 + rms);
-
-          const { s, x, y, z } = noteToDimensions(ftomf(frequency));
-          el.setAttribute('material', 'opacity', opacity);
-          el.object3D.position.set(x, y, z + 0.01);
-          el.object3D.scale.set(s * 1.5, s * 1.5, s * 1.5);
-
-          if (!stats.detected) {
-            el.setAttribute('material', 'opacity', 0);
-          }
-        },
+        onDebug: handlePitch,
 
         // Minimal signal strength (RMS, Optional)
         // minRms: 0.1,
 
         // Detect pitch only with minimal correlation of: (Optional)
-        minCorrelation: 0.9,
+        // minCorrelation: 0.9,
 
         // Detect pitch only if correlation increases with at least: (Optional)
-        minCorreationIncrease: 0.5,
+        minCorrelationIncrease: 0.5,
 
         // Note: you cannot use minCorrelation and minCorreationIncrease
         // at the same time!
@@ -137,11 +103,11 @@ const PitchClassSpiral = ({
         stopAfterDetection: false,
 
         // Buffer length (Optional)
-        length: 256, // default 1024
+        length: 1024, // default 1024
 
         // Limit range (Optional):
         minNote: 32, // by MIDI note number
-        maxNote: 96,
+        maxNote: 128,
 
         // minFrequency: 440,    // by Frequency in Hz
         // maxFrequency: 20000,
@@ -151,24 +117,26 @@ const PitchClassSpiral = ({
 
         // Start right away
         start: true, // default: false
-      });
-
-      window.detector = detector;
-    } else {
+      }));
+      // window.detector = detector;
+    } else if (detector && !pitchDetectEl) {
       detector.stop();
       detector.destroy();
     }
-  }, []);
+  }, [audioContext, detector, is180, pitchDetectEl]);
 
-  const [{midiIn}] = useMidi();
 
-  const midiInPitchClasses = _(12)
-    .range()
-    .map(n => _(midiIn)
-      .pickBy((v, i) => i % 12 === n)
-      .values()
-      .sum())
-    .value();
+
+  const pitchDetectRef = useCallback(setPitchDetectEl, []);
+
+
+  // const midiInPitchClasses = _(12)
+  //   .range()
+  //   .map(n => _(midiIn)
+  //     .pickBy((v, i) => i % 12 === n)
+  //     .values()
+  //     .sum())
+  //   .value();
 
   // TODO: position by freq, not 12TET pitch
 
@@ -185,20 +153,50 @@ const PitchClassSpiral = ({
       {_.range(noteRange[0], noteRange[1] + 1)
         .map(noteToDimensions)
         .map(({n, s, x, y, z}) => (
-          <PitchClass
-            key={n}
-            n={n}
-            position={{x, y, z}}
-            scale={{x: s, y: s, z: s}}
-          />))
+          <React.Fragment key={n}>
+            <Entity
+              line={{
+                color: 'black',
+                opacity: 0.3,
+                start: _.pick(noteToDimensions(n + 0.25), ['x', 'y', 'z']),
+                end: _.pick(noteToDimensions(n + 0.75), ['x', 'y', 'z']),
+                visible: n < noteRange[1],
+              }}
+            />
+
+            <PitchClass
+              darkened={!_.includes(pcsHighlighted, n%12)}
+              n={n}
+              position={{x, y, z}}
+              scale={{x: s, y: s, z: s}}
+            />
+          </React.Fragment>
+          ))
       }
+
+      <PcSpiralWindController
+        noteToDimensions={noteToDimensions}
+      />
+
+      {/* TODO intervals   */}
+      {/*<Entity*/}
+      {/*  line={{*/}
+      {/*    color: 'white',*/}
+      {/*    opacity: 0.3,*/}
+      {/*    start: _.pick(noteToDimensions(60), ['x', 'y', 'z']),*/}
+      {/*    end: _.pick(noteToDimensions(65), ['x', 'y', 'z']),*/}
+      {/*  }}*/}
+      {/*/>*/}
+
+
       <Entity
-        _ref={ref}
+        _ref={pitchDetectRef}
         primitive='a-sphere'
         material={{
           blending: 'additive',
           color: HSVtoHex(1, 0, 1),
           opacity: 0,
+          transparent: true,
         }}
         radius={0.1}
       />

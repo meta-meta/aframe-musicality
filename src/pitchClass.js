@@ -26,32 +26,29 @@ const handleOsc = n => (el) => {
 };
 
 export default ({
-                  n,
-                  isActive,
-                  position = {x: 0, y: 0, z: 0},
-                  scale = {x: 1, y: 1, z: 1}
-                }) =>
+  darkened = true,
+  n,
+  position = {x: 0, y: 0, z: 0},
+  scale = {x: 1, y: 1, z: 1}
+}) =>
   <Entity
-    // animation={{
-    //   dur: 500,
-    //   property: 'position',
-    //   to: position,
-    // }}
-    // events={{
-    //   osc: handleOsc(n),
-    // }}
-    primitive='a-sphere'
+    _ref={handleOsc(n)}
+    animation={{
+      dur: 500,
+      property: 'position',
+      to: position,
+    }}
     material={{
-      blending: 'additive',
-      color: HSVtoHex(n / 12, 0.75, 1),
-      opacity: isActive ? 0.7 : 0.05,
+      blending: darkened ? 'normal' : 'additive',
+      color: HSVtoHex(n / 12, 0.7, darkened ? 0 : 1),
+      opacity: darkened ? 0.5 : 0.1,
     }}
     osc={{
 
     }}
-    _ref={handleOsc(n)}
-    position={position}
+    primitive='a-torus'
     radius={0.1}
+    radius-tubular={0.003}
     scale={scale}
   >
     <Entity
