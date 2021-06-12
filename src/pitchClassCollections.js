@@ -37,12 +37,12 @@ const PitchClassCollections = ({}) => {
                 material={{
                   // blending: 'subtractive',
                   color: '#040404',
-                  opacity: 0.66,
+                  opacity: 0.45,
                 }}
-                position={{ x: 0, y: 0, z: z - 0.05}}
+                position={{ x: 0, y: 0, z: z - 0.01}}
                 rotation={{x: 90, y: 0, z: 0}}
                 primitive='a-cylinder'
-                scale={{ x: 1, y: 0.01, z: 1}}
+                scale={{ x: 1, y: 0.001, z: 1}}
               />
               {_.range(12)
                 .map(n => {
@@ -57,7 +57,7 @@ const PitchClassCollections = ({}) => {
                 })
                 .map(({n, s = 0.5, x, y}) => (
                   <PitchClass
-                    isActive={_.includes(coll, n)}
+                    darkened={!_.includes(coll, n)}
                     key={n}
                     n={n}
                     position={{x, y, z}}

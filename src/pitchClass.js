@@ -33,11 +33,11 @@ export default ({
 }) =>
   <Entity
     _ref={handleOsc(n)}
-    animation={{
-      dur: 500,
-      property: 'position',
-      to: position,
-    }}
+    // animation={{
+    //   dur: 500,
+    //   property: 'position',
+    //   to: position,
+    // }}
     material={{
       blending: darkened ? 'normal' : 'additive',
       color: HSVtoHex(n / 12, 0.7, darkened ? 0 : 1),
@@ -46,6 +46,7 @@ export default ({
     osc={{
 
     }}
+    position={position}
     primitive='a-torus'
     radius={0.1}
     radius-tubular={0.003}
