@@ -3,12 +3,27 @@ import _ from 'lodash';
 import PitchClass from './pitchClass';
 import PitchDetector from 'pitchdetect';
 import React, {useCallback, useEffect, useState} from 'react';
-import useMidi from "./useMidi";
+import useMidiClock from "./useMidiClock";
 import {Entity} from 'aframe-react';
 import {HSVtoHex} from "./color";
 
 const PitchClassCollections = ({}) => {
 
+  const spacing = 0.75;
+
+  const [collEl, setCollEl] = useState();
+  const collRef = useCallback(setCollEl, []);
+
+
+  const { reset } = useMidiClock(({ tick }) => {
+    if (tick % 24 === 0) console.log(tick);
+
+    if (collEl) {
+      collEl.object3D.position.set(0, 0, (tick / 96) * spacing);
+    }
+  });
+
+  window.reset = reset;
 
   useEffect(() => {
     const handleKeyup = ({code, key}) => {
@@ -24,13 +39,14 @@ const PitchClassCollections = ({}) => {
 
   return (// https://www.npmjs.com/package/aframe-animation-component
     <Entity
+      _ref={collRef}
       position={{x: 0, y: 0, z: -2}}
       scale={{x: 4, y: 4, z: 4}}
     >
       {
         _.range(50)
           .map(i => 50 - i)// draw order
-          .map(i => ({ coll: colls[i % colls.length], z: i * -0.75}))
+          .map(i => ({ coll: colls[i % colls.length], z: i * -spacing}))
           .map(({coll, z}) => (
             <React.Fragment key={z}>
               <Entity

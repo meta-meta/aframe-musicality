@@ -2,7 +2,7 @@ import _ from 'lodash';
 import P5 from 'p5';
 import React, {useCallback, useEffect, useState} from 'react';
 import TuneIcon from '@material-ui/icons/Tune';
-import useMidi from "./useMidi";
+import useMidiClock from "./useMidiClock";
 import { initialState, sketch } from "./mandelbrotP5";
 import { makeStyles } from '@material-ui/core/styles';
 import {Button, ButtonGroup, Drawer} from '@material-ui/core';
@@ -146,28 +146,11 @@ const Mandelbrot = () => {
     }
   }, [sketchInstance]);
 
-  const [{midiClockInDevice}, actions] = useMidi( // https://github.com/andregardi/use-global-hook#avoid-unnecessary-renders
-    ({midiClockInDevice}) => ({midiClockInDevice}),
-    actions => actions,
-  );
-
-  useEffect(() => {
-    const handleMidiClock = (evt) => {
-      if (sketchInstance) {
-        sketchInstance.incrementTick(true);
-      }
-    };
-
-    if (midiClockInDevice) {
-      midiClockInDevice.addListener('clock', 'all', handleMidiClock);
+  const {midiClockInDevice} = useMidiClock(() => {
+    if (sketchInstance) {
+      sketchInstance.incrementTick(true);
     }
-
-    return () => {
-      if (midiClockInDevice) {
-        midiClockInDevice.removeListener('clock', 'all', handleMidiClock);
-      }
-    }
-  }, [midiClockInDevice]);
+  });
 
   return (<>
     <div
