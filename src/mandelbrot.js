@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import P5 from 'p5';
+import useP5 from './useP5';
 import React, {useCallback, useEffect, useState} from 'react';
 import TuneIcon from '@material-ui/icons/Tune';
 import useMidiClock from "./useMidiClock";
@@ -24,48 +24,6 @@ const useStyles = makeStyles({
     paddingBottom: 65,
   }
 });
-
-const useP5 = (sketch) => {
-  const [sketchState, setSketchState] = useState(initialState);
-  const [sketchInstance, setSketchInstance] = useState(null);
-  const [resizeObserver, setResizeObserver] = useState(null);
-
-  if (sketchInstance) {
-    sketchInstance.setState = setSketchState;
-    sketchInstance.state = sketchState;
-  }
-
-  const ref = useCallback((el) => {
-    if (el) {
-      const instance = new P5(sketch, el);
-      setSketchInstance(instance);
-
-      instance._height = el.clientHeight;
-      instance._width = el.clientWidth;
-
-      const resize = (width, height) => {
-        instance.resizeCanvas(width, height);
-        setSketchState((prevState) => ({...prevState, isRegenNeeded: true}))
-      }
-
-      const resizeObserver = new ResizeObserver(([{contentRect: {height, width}}]) => {
-        resize(width, height);
-      });
-
-      setResizeObserver(resizeObserver);
-      resizeObserver.observe(el);
-    } else {
-      if (resizeObserver) resizeObserver.disconnect();
-    }
-  }, []);
-
-  return {
-    sketchInstance,
-    sketchState,
-    setSketchState,
-    ref,
-  };
-}
 
 const getHandleAction = (sketchInstance) => (action) => () => {
   if (action === 'toggleAudio') {
@@ -129,7 +87,7 @@ const Mandelbrot = () => {
     sketchInstance,
     sketchState,
     setSketchState,
-  } = useP5(sketch);
+  } = useP5(sketch, initialState);
 
   window.sketchInstance = sketchInstance;
 
