@@ -26,8 +26,13 @@ import {
 } from '@material-ui/core';
 import {BrowserRouter as Router, Route, Link} from 'react-router-dom';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
-import {Menu as MenuIcon} from '@material-ui/icons';
+import {Menu as MenuIcon, WatchLater as MidiClockIcon} from '@material-ui/icons';
 import _ from 'lodash';
+import {MicOffOutlined, MicOutlined} from '@material-ui/icons';
+
+import { intToRatio } from "./fns";
+
+window.intToRation = intToRatio;
 
 const doWhenAframeLoaded = () => {
   if (typeof AFRAME === 'undefined') {
@@ -108,7 +113,7 @@ const routes2d = [
 ];
 
 const App = () => {
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const prefersDarkMode = true; //FIXME useMediaQuery('(prefers-color-scheme: dark)');
 
   const theme = React.useMemo(
     () =>
@@ -195,6 +200,21 @@ const App = () => {
             </Menu>
 
             <Midi />
+
+            <IconButton
+              edge="start"
+              color="inherit"
+              // onClick={handleMidiMenuButtonClick(true)}
+            >
+              <MicOffOutlined />
+            </IconButton>
+            <IconButton
+              edge="start"
+              color="inherit"
+              // onClick={handleMidiMenuButtonClick(true)}
+            >
+              <MicOutlined />
+            </IconButton>
           </Toolbar>
         </AppBar>
       </Router>
