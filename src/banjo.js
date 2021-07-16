@@ -14,7 +14,7 @@ const Banjo = () => (
     <FretMarkers frets={frets} />
     <br/>
     {[0, 9, 5, 0, 0].map((pc0, pc0ix) => (
-      <>
+      <React.Fragment key={pc0ix}>
         {_.range(23)
           .map(i => (i + pc0) % 12)
           .map((pc, ix) =>
@@ -23,7 +23,7 @@ const Banjo = () => (
               : <PC key={ix} n={pc}/>
           )}
         <br/>
-      </>
+      </React.Fragment>
     ))}
     <FretMarkers frets={frets} />
   </div>

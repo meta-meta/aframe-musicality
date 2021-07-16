@@ -11,6 +11,7 @@ import OSC from 'osc-js';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Mandelbrot from './mandelbrot';
+import Mandolin from './mandolin';
 import Midi from './midi';
 import Staff from './staff';
 import Tonnetz from './tonnetz';
@@ -107,6 +108,7 @@ const routes2d = [
   ['PC Tonnetz', '/tonnetz', Tonnetz],
   ['Banjo PCs', '/banjo', Banjo],
   ['Guitar PCs', '/guitar', Guitar],
+  ['Mandolin PCs', '/mandolin', Mandolin],
   ['Ukulele PCs', '/ukulele', Ukulele],
   ['Staff', '/staff', Staff],
   ['Mandelbrot', '/mandelbrot', Mandelbrot],
