@@ -13,6 +13,7 @@ import ReactDOM from 'react-dom';
 import Mandelbrot from './mandelbrot';
 import Mandolin from './mandolin';
 import Midi from './midi';
+import RatioLightship from './ratioLightship';
 import Staff from './staff';
 import Tonnetz from './tonnetz';
 import Ukulele from './ukulele';
@@ -112,6 +113,7 @@ const routes2d = [
   ['Ukulele PCs', '/ukulele', Ukulele],
   ['Staff', '/staff', Staff],
   ['Mandelbrot', '/mandelbrot', Mandelbrot],
+  ['Ratio Lightship', '/ratioLightship', RatioLightship],
 ];
 
 const App = () => {
