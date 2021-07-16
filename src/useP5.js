@@ -19,17 +19,13 @@ export default (sketch, initialState) => {
       instance._height = el.clientHeight;
       instance._width = el.clientWidth;
 
-      const resize = (width, height) => {
+      const ro = new ResizeObserver(([{contentRect: {height, width}}]) => {
         instance.resizeCanvas(width, height);
-        setSketchState((prevState) => ({...prevState, isRegenNeeded: true}))
-      }
-
-      const resizeObserver = new ResizeObserver(([{contentRect: {height, width}}]) => {
-        resize(width, height);
+        if (width + height > 0) setSketchState((prevState) => ({...prevState, isRegenNeeded: true}));
       });
 
-      setResizeObserver(resizeObserver);
-      resizeObserver.observe(el);
+      setResizeObserver(ro);
+      ro.observe(el);
     } else {
       if (resizeObserver) resizeObserver.disconnect();
     }
