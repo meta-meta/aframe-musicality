@@ -59,7 +59,7 @@ export default ({
       text={{
         align: 'center',
         color: HSVtoHex(n / 12, 0.75, 0.5),
-        font: `../${n % 12 > 9 ? 'segoeui' : 'JetBrainsMono-Medium'}-msdf.json`,
+        font: `../JetBrainsMono-Regular-msdf.json`,
         negate: false,
         transparent: true,
         value: toSymbol(n),

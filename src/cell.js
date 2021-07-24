@@ -14,9 +14,6 @@ const Cell = withStyles({
     justifyContent: 'center',
     // border: '1px solid',
   },
-  el: {
-    fontFamily: 'Segoe UI',
-  },
   odd: {
     left: cellSize / 2,
     position: 'relative',
@@ -24,8 +21,7 @@ const Cell = withStyles({
 })(({children, classes, className = '', isOdd, style}) => (
   <div
     className={`${classes.root} ${className} ${isOdd ? classes.odd : ''}`}
-    style={style
-    }>
+    style={style}>
     {children}
   </div>
 ));
