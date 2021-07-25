@@ -113,4 +113,4 @@ Pronounced `oh` `one` `two` `three` `four` `five` `six` `sev` `eight` `nine` `te
 
 * 12ET interval vector - no specific transposition of the pitch content of a melody. This seems to be getting to the essence of a melody. It exposes the movement from one note to the next.
 
-`[:+0 :+12 :-4 :+2 :+2 :+2 :+1]`
+`[:+0 :+12 :-1 :-4 :+2 :+2 :+1]`
