@@ -64,18 +64,25 @@ Clojure is a very high-level language that excels at manipulating data. It offer
 
 `0` `00` `07` `60` `67` `127` ...
 
-* 12ET chord - serves as a chord shorthand that exposes its intervallic content and reolves the issue of naming exotic chords at the expense of indeterminate voicing and making common chords a little more computery looking. `12ET pitch root` `+` `pitch-class intervals`. 
+* 12ET chord - serves as a chord shorthand that exposes its intervallic content and reolves the issue of naming exotic chords at the expense of indeterminate voicing and making common chords a little more computery looking: `<12ET pitch root>+<pitch-class intervals>`. 
 
 `:0+47` `:Ɛ+37` `:5+47૪` ...
+
 `:0+47` = `Cmaj`
+
 `:5+46Ɛ` = `Fmaj7♭5`
 
 * JI pitch-class (not sure if it's useful to distinguish from interval)
+
 `2/1` `5/4` `1/8` ... (clojure has ratio literals, unfortunately clojurescript does not so this may be a no-go)
+
 `:2|1` `:5|4` `:1|8` ... (a possible compromise for legibility)
 
 * binary rhythm - beat or rest
-`1` `0`
+
+`x` `.`
+
+`[x . x . x x . x . x . x]`
 
 ### slightly abstract
 
