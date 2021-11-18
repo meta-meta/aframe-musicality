@@ -1,7 +1,101 @@
 const fs = require('fs');
+const path = require('path');
+const csv = require('fast-csv');
 const https = require('https');
 const OSC = require('osc-js');
 const os = require('os');
+const _ = require('lodash');
+
+const rawIds = {};
+const rawLinks = [];
+
+const handleRow = ({ id, senderuserid, receiveruserid, eventtime, event }) => {
+  const senAccum = rawIds[senderuserid] || { sent: 0, received: 0 };
+  const recAccum = rawIds[receiveruserid] || { sent: 0, received: 0 };
+
+  if (event === 'pending') {
+    senAccum.sent = senAccum.sent + 1;
+  } else {
+    recAccum.received = recAccum.received + 1;
+  }
+
+  rawIds[senderuserid] = senAccum;
+  rawIds[receiveruserid] = recAccum;
+
+  rawLinks.push({ source: senderuserid, target: receiveruserid, event });
+
+  // if (event === 'accepted') {
+  //   rawLinks.push({ target: senderuserid, source: receiveruserid, event });
+  // }
+  // if (event === 'declined') {
+  //   rawLinks.push({ target: senderuserid, source: receiveruserid, event });
+  // }
+  // if (event === 'pending') {
+  // }
+  // console.log(id, links.length)
+}
+
+fs.createReadStream(path.resolve(__dirname, 'Likes-SoulSingles-2021.csv'))
+  .pipe(csv.parse({ headers: true }))
+  .on('error', error => console.error(error))
+  .on('data', handleRow)
+  .on('end', (rowCount) => {
+    console.log(`Parsed ${rowCount} rows`);
+
+    // const ids = _(rawIds)
+    //   .values()
+    //   .sampleSize(100)
+    //   .map(id => [id, id])
+    //   .fromPairs()
+    //   .value();
+
+
+    // const links = _.sampleSize(rawLinks, 5000);
+    const thresh = 150;
+    const links = _(rawLinks)
+      .filter(({ source, target }) => _.every([
+        rawIds[source].received > thresh || rawIds[source].sent > thresh,
+        rawIds[target].sent > thresh || rawIds[target].received > thresh,
+      ]))
+      .sampleSize(10000)
+      .value();
+
+    const ids = {};
+    links.forEach(({ source, target }) => {
+      ids[source] = source;
+      ids[target] = target;
+    });
+    const nodes = _.keys(ids).map(id => ({ id, sent: rawIds[id].sent, received: rawIds[id].received }));
+
+    // artificial "Myspace Tom"
+    // nodes.push({id: '0'})
+    // nodes.forEach(({id}) => {
+    //   links.push({ target: '0', source: id, event: 'pending' });
+    // })
+
+
+    // const links = rawLinks.filter(({ source, target  }) => {
+    //   console.log(source, target, _.includes(ids, source), _.includes(ids, target) )
+    //
+    //   return _.includes(ids, source) && _.includes(ids, target);
+    // })
+
+
+    // console.log('linkCount:', links.length)
+
+    fs.writeFileSync(path.resolve(__dirname, 'src/likes.json'), JSON.stringify({
+      nodes,
+      links,
+    }));
+
+    console.log(`Wrote JSON`);
+  });
+
+
+
+
+/*
+
 
 const server = https.createServer({
   host: '0.0.0.0',
@@ -38,3 +132,4 @@ osc.open() // start a WebSocket server on port 8080
 // console.log(`listening at ${address}`)
 console.log(`WS Port ${wsPort}`)
 console.log(`UDP Port ${udpPort}`)
+*/
