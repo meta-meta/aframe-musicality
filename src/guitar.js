@@ -39,21 +39,55 @@ osc.on('/likes/*', ({address, args: [note, vel]}) => {
 });
 
 
+const concepts = {
+  birdcallSynth: 'birdcallSynth',
+  earthUnderGold: 'earthUnderGold',
+  feynman: 'feynman',
+  musicalityClj: 'musicalityClj',
+  musicalityComputer: 'musicalityComputer',
+  musicalitySequencer: 'musicalitySequencer',
+  oronoco: 'oronoco',
+  pcClock: 'pcClock',
+  pheremin: 'pheremin',
+  pitchSpiral: 'pitchSpiral',
+  sinewaveOrgan: 'sinewaveOrgan',
+  soundgarden: 'soundgarden',
+  vrimba: 'vrimba',
+};
+
+
 const tags = {
   '12ET': [
-    'Feynman',
-    'musicality-clj',
-    'musicality-sequencer',
-    'musicality.computer',
-    'pc-clock',
-    'pitch-spiral',
-    'sinewave-organ',
-    'Soundgarden',
-    'VRimba',
+    concepts.feynman,
+    concepts.musicalityClj,
+    concepts.musicalityComputer,
+    concepts.musicalitySequencer,
+    concepts.pcClock,
+    concepts.pitchSpiral,
+    concepts.sinewaveOrgan,
+    concepts.soundgarden,
+    concepts.vrimba,
   ],
-  '3D print': [],
-  'JI': [],
-  'MIDI sync': [],
+  '3D print': [
+    concepts.feynman,
+    concepts.oronoco,
+    concepts.pcClock,
+  ],
+  'JI': [
+    concepts.musicalityClj,
+    concepts.musicalityComputer,
+    concepts.musicalitySequencer,
+    concepts.sinewaveOrgan,
+    concepts.soundgarden,
+    concepts.vrimba,
+  ],
+  'MIDI sync': [
+    concepts.feynman,
+    concepts.musicalityComputer,
+    concepts.musicalitySequencer,
+    concepts.pcClock,
+    concepts.pitchSpiral,
+  ],
   'MIDI': [],
   'OSC': [],
   'XR object': [],
@@ -65,40 +99,31 @@ const tags = {
   'tool': [],
 };
 
-const concepts = [
-  'Earth Under Gold',
-  'Feynman',
-  'musicality-clj',
-  'musicality-sequencer',
-  'musicality.computer',
-  'Oronoco',
-  'pc-clock',
-  'Pheremin',
-  'pitch-spiral',
-  'sinewave-organ',
-  'Soundgarden',
-  'VRimba',
-];
+
+
 
 const features = [];
 
-const linkTypes = [
-  'describes',
-  'component of',
-  '',
+const n = {
+  concept: 'concept',
+  tag: 'tag',
+};
 
-];
-
+const l = {
+  componentOf: 'componentOf',
+  dependsOn: 'dependsOn',
+  describes: 'describes',
+};
 
 const data = {
   nodes: [
-    ...concepts.map(id => ({id, type: 'concept',})),
-    ..._.keys(tags).map(id => ({id, type: 'tag',})),
+    ..._.keys(concepts).map(id => ({id, type: n.concept})),
+    ..._.keys(tags).map(id => ({id, type: n.tag})),
   ],
   links: [
     ..._(tags)
       .map((conceptsTagged, tagId) =>
-        conceptsTagged.map(conceptId => ({source: tagId, target: conceptId, type: 'describes'}))
+        conceptsTagged.map(conceptId => ({source: tagId, target: conceptId, type: l.describes}))
       ).flatten()
       .value(),
     // {source: '2', target: '1', type: 'describes'},
