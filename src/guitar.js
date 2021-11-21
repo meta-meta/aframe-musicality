@@ -88,15 +88,43 @@ const tags = {
     concepts.pcClock,
     concepts.pitchSpiral,
   ],
-  'MIDI': [],
-  'OSC': [],
-  'XR object': [],
-  'dataviz': [],
-  'electronic': [],
-  'hardware': [],
-  'instrument': [],
-  'media production': [],
-  'tool': [],
+  'MIDI': [
+    concepts.musicalityClj,
+    concepts.pcClock,
+  ],
+  'OSC': [
+    concepts.feynman,
+  ],
+  'XR object': [
+    concepts.pcClock,
+    concepts.pheremin,
+    concepts.pitchSpiral,
+    concepts.vrimba,
+  ],
+  'dataviz': [
+    concepts.feynman,
+    concepts.pcClock,
+    concepts.pitchSpiral,
+  ],
+  'electronic': [
+    concepts.feynman,
+  ],
+  'hardware': [
+    concepts.feynman,
+  ],
+  'instrument': [
+    concepts.birdcallSynth,
+    concepts.pheremin,
+    concepts.sinewaveOrgan,
+    concepts.vrimba,
+  ],
+  'media production': [
+    concepts.earthUnderGold,
+  ],
+  'tool': [
+    concepts.musicalityClj,
+    concepts.musicalityComputer,
+  ],
 };
 
 
@@ -190,7 +218,7 @@ const Guitar = () => {
       numDimensions={3}
       graphData={data}
       nodeOpacity={0.7}
-      nodeLabel={({id, type}) => `${id} type:${type}`}
+      nodeLabel={({id, type}) => `${id}`}
       nodeColor={({type}) => HSVtoHex({concept: 0, tag: 0.1, feature: 0.3}[type] || 0.75, 1, 1)}
       nodeResolution={12}
       nodeRelSize={10}
@@ -200,6 +228,7 @@ const Guitar = () => {
       linkDirectionalParticleColor={linkColor}
       linkDirectionalParticleResolution={1}
       linkDirectionalParticleWidth={1.5}
+      linkLabel={({type}) => `${type}`}
 
       // linkDirectionalArrowLength={5}
       // linkDirectionalArrowRelPos={showReceiver ? 0.99 : 0.02}
