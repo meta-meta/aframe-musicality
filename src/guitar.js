@@ -39,6 +39,9 @@ osc.on('/likes/*', ({address, args: [note, vel]}) => {
 });
 
 
+/**
+ * Concepts, not projects. Concepts may be proto-projects or just ideas or items.
+ */
 const concepts = {
   birdcallSynth: 'birdcallSynth',
   earthUnderGold: 'earthUnderGold',
@@ -46,6 +49,7 @@ const concepts = {
   musicalityClj: 'musicalityClj',
   musicalityComputer: 'musicalityComputer',
   musicalitySequencer: 'musicalitySequencer',
+  noteTime: 'noteTime',
   oronoco: 'oronoco',
   pcClock: 'pcClock',
   pheremin: 'pheremin',
@@ -55,6 +59,35 @@ const concepts = {
   vrimba: 'vrimba',
 };
 
+const impls = {
+
+};
+
+const todo = {
+
+};
+
+const features = {
+
+};
+
+// [].map(conceptId => ({
+//   source: tagId,
+//   target: conceptId,
+//   type: l.componentOf,
+// }))
+
+// [].map(conceptId => ({
+//   source: tagId,
+//   target: conceptId,
+//   type: l.dependsOn,
+// }))
+
+// [].map(conceptId => ({
+//   source: tagId,
+//   target: conceptId,
+//   type: l.implOf,
+// }))
 
 const tags = {
   '12ET': [
@@ -103,6 +136,7 @@ const tags = {
   ],
   'dataviz': [
     concepts.feynman,
+    concepts.noteTime,
     concepts.pcClock,
     concepts.pitchSpiral,
   ],
@@ -127,13 +161,10 @@ const tags = {
   ],
 };
 
-
-
-
-const features = [];
-
 const n = {
   concept: 'concept',
+  feature: 'feature',
+  todo: 'TODO',
   tag: 'tag',
 };
 
@@ -141,6 +172,7 @@ const l = {
   componentOf: 'componentOf',
   dependsOn: 'dependsOn',
   describes: 'describes',
+  implOf: 'implOf',
 };
 
 const data = {
@@ -151,7 +183,11 @@ const data = {
   links: [
     ..._(tags)
       .map((conceptsTagged, tagId) =>
-        conceptsTagged.map(conceptId => ({source: tagId, target: conceptId, type: l.describes}))
+        conceptsTagged.map(conceptId => ({
+          source: tagId,
+          target: conceptId,
+          type: l.describes,
+        }))
       ).flatten()
       .value(),
     // {source: '2', target: '1', type: 'describes'},
