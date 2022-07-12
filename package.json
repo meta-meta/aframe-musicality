@@ -3,6 +3,7 @@
   "name": "aframe-musicality",
   "version": "0.1.0",
   "dependencies": {
+    "@fseehawer/react-circular-slider": "^2.5.9",
     "@material-ui/core": "^4.8.3",
     "@material-ui/icons": "^4.9.1",
     "aframe": "1.2.0",

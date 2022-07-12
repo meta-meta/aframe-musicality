@@ -1,22 +1,23 @@
-import _ from 'lodash';
-import useP5 from './useP5';
-import React, {useCallback, useEffect, useState} from 'react';
-import TuneIcon from '@material-ui/icons/Tune';
-import useMidiClock from "./useMidiClock";
-import { initialState, sketch } from "./mandelbrotP5";
-import { makeStyles } from '@material-ui/core/styles';
-import {Button, ButtonGroup, Drawer} from '@material-ui/core';
-
-import KeyboardArrowUpOutlinedIcon from '@material-ui/icons/KeyboardArrowUpOutlined';
+import CircularSlider from '@fseehawer/react-circular-slider';
 import KeyboardArrowDownOutlinedIcon from '@material-ui/icons/KeyboardArrowDownOutlined';
 import KeyboardArrowLeftOutlinedIcon from '@material-ui/icons/KeyboardArrowLeftOutlined';
 import KeyboardArrowRightOutlinedIcon from '@material-ui/icons/KeyboardArrowRightOutlined';
-import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
+import KeyboardArrowUpOutlinedIcon from '@material-ui/icons/KeyboardArrowUpOutlined';
 import PauseCircleOutlineIcon from '@material-ui/icons/PauseCircleOutline';
+import PlayCircleOutlineIcon from '@material-ui/icons/PlayCircleOutline';
+import React, {useEffect, useState} from 'react';
+import TuneIcon from '@material-ui/icons/Tune';
 import ViewComfyOutlinedIcon from '@material-ui/icons/ViewComfyOutlined';
 import ViewModuleOutlinedIcon from '@material-ui/icons/ViewModuleOutlined';
 import ZoomInOutlinedIcon from '@material-ui/icons/ZoomInOutlined';
 import ZoomOutOutlinedIcon from '@material-ui/icons/ZoomOutOutlined';
+import _ from 'lodash';
+import useMidiClock from "./useMidiClock";
+import useP5 from './useP5';
+import { HSVtoHex } from './color';
+import { initialState, sketch } from "./mandelbrotP5";
+import { makeStyles } from '@material-ui/core/styles';
+import {Button, ButtonGroup, Drawer} from '@material-ui/core';
 
 const useStyles = makeStyles({
   paper: {
@@ -147,8 +148,6 @@ const Mandelbrot = () => {
         // onMouseEnter={ev => { ev.currentTarget.style.opacity = 1 }}
         // onMouseLeave={ev => { ev.currentTarget.style.opacity = 0.5 }}
       >
-
-
         <ButtonGroup fullWidth size="large">
           <Button onClick={handleAction('toggleAudio')}>
             {!sketchState.isPlaying ? <PlayCircleOutlineIcon /> : <PauseCircleOutlineIcon />}
@@ -238,14 +237,7 @@ const Mandelbrot = () => {
           sketchState={sketchState}
           setSketchState={setSketchState}
         />
-        <Slider
-          min={0.1}
-          max={500}
-          onPointerUp={() => {
-            console.log('onPointerUp');
-            sketchState.isRegenNeeded = true // TODO: isFreqChanged instead of full regen
-          }}
-          step={0.1}
+        <FreqSlider
           stateKey={"fundamentalFreq"}
           sketchState={sketchState}
           setSketchState={setSketchState}
@@ -304,5 +296,111 @@ const Slider = ({ sketchState, setSketchState, stateKey, ...props }) => (
       />
     </div>
   );
+
+
+const FreqSlider = ({ sketchState, setSketchState, stateKey }) => {
+  const degPerExp = 2048;
+  const errMargin = degPerExp / 3;
+  const [state, setState] = useState(() => ({
+    deg: 0,
+    exp: 0,
+    txt: 1,
+  }));
+
+  const handleChange = v => {
+    const {deg, exp} = state;
+    const didCrossUp = v >= 0 && v < errMargin && deg > degPerExp - errMargin;
+    const didCrossDn = deg >= 0 && deg < errMargin && v > degPerExp - errMargin;
+    const freq = Math.pow(2, exp + deg / degPerExp);
+    const nextState = {
+      deg: v,
+      exp: didCrossUp
+        ? exp + 1
+        : didCrossDn
+          ? exp - 1
+          : exp,
+      txt: freq
+    };
+    setState(nextState);
+    setSketchState(state => ({
+      ...state,
+      [stateKey]: freq,
+    }));
+  }
+
+  return (
+    <div>
+      {stateKey}: {sketchState[stateKey]}
+      <br />
+      <div
+        style={{position: 'relative'}}
+        onPointerUp={() => {
+          sketchState.isRegenNeeded = true // TODO: isFreqChanged instead of full regen
+        }}
+      >
+        <CircularSlider
+          dataIndex={state.deg}
+          min={0}
+          max={degPerExp - 1}
+          knobColor="#AAA"
+          label="Fundamental Frequency"
+          renderLabelValue={
+            <input
+              type="number"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '2em',
+                left: '50%',
+                marginLeft: '-35%',
+                marginTop: '-0.5em',
+                position: 'absolute',
+                textAlign: 'center',
+                top: '50%',
+                width: '70%',
+                zIndex: 3,
+              }}
+              value={state.txt}
+              onChange={ev => {
+                setState({
+                  ...state,
+                  txt: Number(ev.target.value),
+                });
+              }}
+              onKeyDown={({ key }) => {
+                if (key === 'Enter') {
+                  const freq = Math.max(state.txt, Number.MIN_VALUE);
+                  const logFreq = Math.log2(freq);
+                  const exp = Math.floor(logFreq);
+
+                  setState({
+                    deg: Math.floor(degPerExp * (logFreq - exp)),
+                    exp,
+                    txt: freq,
+                  });
+
+                  setSketchState(state => ({
+                    ...state,
+                    [stateKey]: freq,
+                    isRegenNeeded: true,
+                  }));
+                }
+              }}
+            />
+          }
+          onChange={handleChange}
+          progressColorFrom={HSVtoHex(state.exp / 15, 1, 1)}
+          progressColorTo={HSVtoHex((state.exp + 1) / 15, 1, 1)}
+          progressLineCap="flat"
+          trackColor="#666"
+          valueFontSize="4rem"
+        />
+
+      </div>
+    </div>
+  );
+}
+
 
 export default Mandelbrot;
