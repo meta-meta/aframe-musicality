@@ -106,7 +106,7 @@ export const sketch = (p5) => {
     oscs.forEach(({osc, gain}) =>
     {
       osc.stop();
-    }); // TODO: gain.disconnect?
+    }); // TODO: gain.disconnect? delete osc and gain?
 
     oscs = _.range(p5.state.partialsCountMax).map(() => {
       const osc = audioCtx.createOscillator();
@@ -392,14 +392,14 @@ export const sketch = (p5) => {
       gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
     })
 
-    if (oscs.length !== partialsCountMax) {
-      setupOscillators(); // TODO: fade out first
-    }
-
     const {
       fundamentalFreq,
       partialsCountMax,
     } = p5.state;
+
+    if (oscs.length !== partialsCountMax) {
+      setupOscillators(); // TODO: fade out first
+    }
 
     const hilbMand = genHilbertMandelbrot();
 

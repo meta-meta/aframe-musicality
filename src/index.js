@@ -12,6 +12,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Mandelbrot from './mandelbrot';
 import Mandolin from './mandolin';
+import Mic from './mic';
 import Midi from './midi';
 import RatioLightship from './ratioLightship';
 import Staff from './staff';
@@ -28,9 +29,12 @@ import {
 } from '@material-ui/core';
 import {BrowserRouter as Router, Route, Link} from 'react-router-dom';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
-import {Menu as MenuIcon, WatchLater as MidiClockIcon} from '@material-ui/icons';
+import {
+  Menu as MenuIcon,
+  MenuBookIcon,
+  WatchLater as MidiClockIcon,
+} from '@material-ui/icons';
 import _ from 'lodash';
-import {MicOffOutlined, MicOutlined} from '@material-ui/icons';
 
 import { intToRatio } from "./fns";
 
@@ -117,21 +121,47 @@ const routes2d = [
 ];
 
 const App = () => {
-  const prefersDarkMode = true; //FIXME useMediaQuery('(prefers-color-scheme: dark)');
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+
+  const neutral = {
+    palette: { // https://material-ui.com/customization/palette/
+      action: {
+        active: '#660000',
+      },
+      primary: {
+        main: '#330033'
+      },
+      type: 'dark',
+    },
+  };
+
+  const dark = {
+    palette: { // https://material-ui.com/customization/palette/
+      action: {
+        active: '#660000',
+      },
+      primary: {
+        main: '#330033'
+      },
+      type: 'dark',
+    },
+  };
+
+  const light = {
+    palette: { // https://material-ui.com/customization/palette/
+      action: {
+        active: '#660000',
+      },
+      primary: {
+        main: '#330033'
+      },
+      type: 'light',
+    },
+  };
 
   const theme = React.useMemo(
     () =>
-      createMuiTheme({
-        palette: { // https://material-ui.com/customization/palette/
-          action: {
-            active: '#660000',
-          },
-          primary: {
-            main: '#330033'
-          },
-          type: prefersDarkMode ? 'dark' : 'light',
-        },
-      }),
+      createMuiTheme(prefersDarkMode ? dark : light),
     [prefersDarkMode],
   );
 
@@ -187,7 +217,7 @@ const App = () => {
               <MenuItem disabled divider >2D</MenuItem>
               {routes2d.map(([title, url, component, isDevOnly], idx) => !isDevOnly && (
                 <MenuItem key={idx}>
-                  <Link style={{ color: 'pink'}} onClick={handleMenuClose} to={url}>{title}</Link>
+                  <Link style={{ color: 'darkmagenta'}} onClick={handleMenuClose} to={url}>{title}</Link>
                 </MenuItem>
               ))}
               <MenuItem disabled divider>VR</MenuItem>
@@ -205,20 +235,7 @@ const App = () => {
 
             <Midi />
 
-            <IconButton
-              edge="start"
-              color="inherit"
-              // onClick={handleMidiMenuButtonClick(true)}
-            >
-              <MicOffOutlined />
-            </IconButton>
-            <IconButton
-              edge="start"
-              color="inherit"
-              // onClick={handleMidiMenuButtonClick(true)}
-            >
-              <MicOutlined />
-            </IconButton>
+            <Mic />
           </Toolbar>
         </AppBar>
       </Router>

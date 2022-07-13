@@ -2,7 +2,7 @@ import _ from 'lodash';
 import PC from './pc';
 import React from 'react';
 
-const Banjo = () => (
+const Intro = () => (
   <div style={{height: '100%', overflowY: 'auto', padding: '20% 10%'}}>
     <h1>What is this nonsense all about?</h1>
 
@@ -62,4 +62,4 @@ const Banjo = () => (
   </div>
 );
 
-export default Banjo;
+export default Intro;
