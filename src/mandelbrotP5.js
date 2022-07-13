@@ -23,12 +23,41 @@ import _ from 'lodash';
   * manual cursor
 * */
 
+// Only add setZeroTimeout to the window object, and hide everything
+// else in a closure.
+(function() {
+  var timeouts = [];
+  var messageName = "zero-timeout-message";
+
+  // Like setTimeout, but only takes a function argument.  There's
+  // no time argument (always zero) and no arguments (you have to
+  // use a closure).
+  function setZeroTimeout(fn) {
+    timeouts.push(fn);
+    window.postMessage(messageName, "*");
+  }
+
+  function handleMessage(event) {
+    if (event.source == window && event.data == messageName) {
+      event.stopPropagation();
+      if (timeouts.length > 0) {
+        var fn = timeouts.shift();
+        fn();
+      }
+    }
+  }
+
+  window.addEventListener("message", handleMessage, true);
+
+  // Add the one thing we want added to the window object.
+  window.setZeroTimeout = setZeroTimeout;
+})();
 
 
 export const initialState = {
-  decayDuration: 5000,
+  decayDuration: 1000,
   exciteEnergy: 0.05,
-  exciteDuration: 1000,
+  exciteDuration: 50,
   fundamentalFreq: 200,
   hilbertN: 64, // hilbertN must be power of 2 in order to be square
   hilbMand: [/*{ x, y, m }*/], // coordinates and associated mandelbrot val in hilbert traversal order
@@ -418,7 +447,7 @@ export const sketch = (p5) => {
       clearTimeout(decayTimerId);
       clearTimeout(zeroGainTimerId);
       oscs[oscIdx].osc.frequency.cancelScheduledValues(audioCtx.currentTime);
-      oscs[oscIdx].osc.frequency.linearRampToValueAtTime(partial * fundamentalFreq, audioCtx.currentTime + 0.5);
+      oscs[oscIdx].osc.frequency.linearRampToValueAtTime(partial * fundamentalFreq, audioCtx.currentTime + 1);
     });
 
     p5.setState(prevState => {
@@ -589,6 +618,7 @@ export const sketch = (p5) => {
     p5.createCanvas(p5._width, p5._height);
     p5.colorMode(p5.HSB);
     p5.textFont(font);
+    p5.incrementTick();
   }
 
   p5.incrementTick = (isExternal = false) => {
@@ -614,6 +644,8 @@ export const sketch = (p5) => {
       p5.state.tickLastMillis = now;
       cursorExcite(0);
     }
+
+    if (!isExternal) window.setZeroTimeout(p5.incrementTick)
   }
 
   let prevTick = 0;
@@ -628,7 +660,7 @@ export const sketch = (p5) => {
       genAndDrawHilbertMandelbrot();
     }
 
-    if (midiClock === 0) p5.incrementTick();
+    // if (midiClock === 0) p5.incrementTick();
 
     if (_.every([
       !isRegenNeeded,

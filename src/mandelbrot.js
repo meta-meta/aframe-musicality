@@ -123,7 +123,8 @@ const Mandelbrot = () => {
     />
 
     <div style={{
-      bottom: 0,
+      bottom: 10,
+      right: 10,
       padding: 0,
       position: 'absolute',
       textAlign: 'center',
@@ -138,7 +139,7 @@ const Mandelbrot = () => {
       )}
 
       <Drawer
-        anchor="top"
+        anchor="bottom"
         classes={useStyles()}
         color="transparent"
         open={sketchState.isControlPanelOpen}
@@ -159,16 +160,17 @@ const Mandelbrot = () => {
         </ButtonGroup>
 
         <ButtonGroup fullWidth size="large">
+
+          <Button onClick={handleAction('resDec')}>
+            <ViewModuleOutlinedIcon/>
+          </Button>
+
           <Button onClick={handleAction('moveUp')}>
             <KeyboardArrowUpOutlinedIcon/>
           </Button>
 
-          <Button onClick={handleAction('moveLeft')}>
-            <KeyboardArrowLeftOutlinedIcon/>
-          </Button>
-
-          <Button onClick={handleAction('moveRight')}>
-            <KeyboardArrowRightOutlinedIcon/>
+          <Button onClick={handleAction('resInc')}>
+            <ViewComfyOutlinedIcon/>
           </Button>
 
           <Button onClick={handleAction('zoomIn')}>
@@ -178,16 +180,17 @@ const Mandelbrot = () => {
         </ButtonGroup>
 
         <ButtonGroup fullWidth size="large">
+
+          <Button onClick={handleAction('moveLeft')}>
+            <KeyboardArrowLeftOutlinedIcon/>
+          </Button>
+
           <Button onClick={handleAction('moveDown')}>
             <KeyboardArrowDownOutlinedIcon/>
           </Button>
 
-          <Button onClick={handleAction('resDec')}>
-            <ViewModuleOutlinedIcon/>
-          </Button>
-
-          <Button onClick={handleAction('resInc')}>
-            <ViewComfyOutlinedIcon/>
+          <Button onClick={handleAction('moveRight')}>
+            <KeyboardArrowRightOutlinedIcon/>
           </Button>
 
           <Button onClick={handleAction('zoomOut')}>
@@ -196,80 +199,110 @@ const Mandelbrot = () => {
 
         </ButtonGroup>
 
-        {midiClockInDevice ? (
-          <Slider
-            min={1}
-            max={1024}
-            stateKey={"midiClocksPerTick"}
-            sketchState={sketchState}
-            setSketchState={setSketchState}
-          />
-        ) : (
-          <Slider
-            min={16}
-            max={1000}
-            stateKey={"tickDuration"}
-            sketchState={sketchState}
-            setSketchState={setSketchState}
-          />
-        )}
+        <br/>
 
-        <Slider
-          min={1}
-          max={4000}
-          stateKey={"exciteDuration"}
-          sketchState={sketchState}
-          setSketchState={setSketchState}
-        />
-        <Slider
-          min={10}
-          max={8000}
-          stateKey={"decayDuration"}
-          sketchState={sketchState}
-          setSketchState={setSketchState}
-        />
-
-        <Slider
-          min={0.01}
-          max={1}
-          step={0.01}
-          stateKey={"exciteEnergy"}
-          sketchState={sketchState}
-          setSketchState={setSketchState}
-        />
         <FreqSlider
+          initialVal={60}
+          isRegenRequired
+          label="Fundamental frequency (Hz)"
           stateKey={"fundamentalFreq"}
           sketchState={sketchState}
           setSketchState={setSketchState}
         />
-        <Slider
-          min={1}
-          max={1000}
-          stateKey={"partialsCountMax"}
-          sketchState={sketchState}
-          setSketchState={setSketchState}
-          // onInput={() => {
-          //   console.log('onInput');
-          //   sketchState.isRegenNeeded = true
-          // // console.log('sketchState.isRegenNeeded:', sketchState.isRegenNeeded)
-          // }}
-          onPointerUp={() => {
-            console.log('onPointerUp');
-            sketchState.isRegenNeeded = true
-            // console.log('sketchState.isRegenNeeded:', sketchState.isRegenNeeded)
-          }}
-        />
-        <Slider
-          min={64}
-          max={8000}
-          stateKey={"maxIters"}
-          sketchState={sketchState}
-          setSketchState={setSketchState}
-          onPointerUp={() => {
-            console.log('onPointerUp');
-            sketchState.isRegenNeeded = true
-          }}
-        />
+
+
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-around',
+        }}>
+
+          <FreqSlider
+            initialVal={16}
+            isInt
+            isRegenRequired
+            label="Number of partials"
+            max={1024}
+            min={1}
+            precision={1}
+            setSketchState={setSketchState}
+            size={120}
+            sketchState={sketchState}
+            stateKey={"partialsCountMax"}
+          />
+
+          <FreqSlider
+            initialVal={4096}
+            isInt
+            isRegenRequired
+            label="Mandelbrot iterations"
+            max={8192}
+            min={64}
+            setSketchState={setSketchState}
+            size={120}
+            sketchState={sketchState}
+            stateKey={"maxIters"}
+          />
+
+          {midiClockInDevice ? (
+            <FreqSlider // TODO: integers
+              min={1}
+              max={1024}
+              initialVal={24}
+              label="MIDI clocks per tick"
+              size={120}
+              stateKey={"midiClocksPerTick"}
+              sketchState={sketchState}
+              setSketchState={setSketchState}
+            />
+          ) : (
+            <FreqSlider
+              initialVal={100}
+              label="Tick duration (ms)"
+              size={120}
+              stateKey={"tickDuration"}
+              sketchState={sketchState}
+              setSketchState={setSketchState}
+            />
+          )}
+
+          <FreqSlider
+            initialVal={50}
+            label="Excite duration (ms)"
+            size={120}
+            stateKey={"exciteDuration"}
+            sketchState={sketchState}
+            setSketchState={setSketchState}
+          />
+          <FreqSlider
+            initialVal={1000}
+            label="Decay duration (ms)"
+            size={120}
+            stateKey={"decayDuration"}
+            sketchState={sketchState}
+            setSketchState={setSketchState}
+          />
+
+          <FreqSlider
+            initialVal={0.05}
+            label="Excite energy"
+            precision={4}
+            size={120}
+            stateKey={"exciteEnergy"}
+            sketchState={sketchState}
+            setSketchState={setSketchState}
+          />
+        </div>
+
+        <ButtonGroup fullWidth size="large">
+          <Button onClick={handleAction('toggleAudio')}>
+            {!sketchState.isPlaying ? <PlayCircleOutlineIcon /> : <PauseCircleOutlineIcon />}
+          </Button>
+
+          <Button onClick={handleAction('toggleControlPanel')}>
+            hide controls
+          </Button>
+        </ButtonGroup>
       </Drawer>
 
 
@@ -298,28 +331,60 @@ const Slider = ({ sketchState, setSketchState, stateKey, ...props }) => (
   );
 
 
-const FreqSlider = ({ sketchState, setSketchState, stateKey }) => {
+const FreqSlider = ({
+  initialVal = 1,
+  isInt = false,
+  isRegenRequired = false,
+  label = '',
+  max = Number.MAX_VALUE,
+  min = Number.MIN_VALUE,
+  precision = 6,
+  setSketchState,
+  size = 240,
+  sketchState,
+  stateKey,
+}) => {
   const degPerExp = 2048;
   const errMargin = degPerExp / 3;
-  const [state, setState] = useState(() => ({
-    deg: 0,
-    exp: 0,
-    txt: 1,
-  }));
+
+  const constrainVal = val => {
+    const v = Math.min(Math.max(val, min), max);
+    return isInt ? Math.round(v) : v;
+  }
+
+  const valToState = val => {
+    const freq = constrainVal(val);
+    const logFreq = Math.log2(freq);
+    const exp = Math.floor(logFreq);
+
+    return {
+      deg: Math.floor(degPerExp * (logFreq - exp)),
+      exp,
+      numberInputVal: freq,
+    };
+  }
+
+  const [state, setState] = useState(() => valToState(initialVal));
+
+  useEffect(() => {  // hack because react-circle-slider invokes the onChange callback when its knob position changes even via props
+    _.defer(() => setState(valToState(initialVal)));
+  }, []);
 
   const handleChange = v => {
     const {deg, exp} = state;
     const didCrossUp = v >= 0 && v < errMargin && deg > degPerExp - errMargin;
     const didCrossDn = deg >= 0 && deg < errMargin && v > degPerExp - errMargin;
-    const freq = Math.pow(2, exp + deg / degPerExp);
+    const nextExp = didCrossUp
+      ? exp + 1
+      : didCrossDn
+        ? exp - 1
+        : exp;
+
+    const freq = constrainVal(Math.pow(2, nextExp + v / degPerExp));
     const nextState = {
       deg: v,
-      exp: didCrossUp
-        ? exp + 1
-        : didCrossDn
-          ? exp - 1
-          : exp,
-      txt: freq
+      exp: nextExp,
+      numberInputVal: freq
     };
     setState(nextState);
     setSketchState(state => ({
@@ -329,13 +394,24 @@ const FreqSlider = ({ sketchState, setSketchState, stateKey }) => {
   }
 
   return (
-    <div>
-      {stateKey}: {sketchState[stateKey]}
-      <br />
+    <div style={{
+      flex: `0 ${size + 40}px`,
+      height: size + 40,
+      marginBottom: 40,
+    }}>
+      <div style={{
+        height: '3em',
+      }}>
+      {label || `${stateKey}: ${sketchState[stateKey]}`}
+      </div>
+
       <div
-        style={{position: 'relative'}}
+        style={{
+          paddingTop: 10,
+          position: 'relative',
+        }}
         onPointerUp={() => {
-          sketchState.isRegenNeeded = true // TODO: isFreqChanged instead of full regen
+          sketchState.isRegenNeeded = isRegenRequired // TODO: isFreqChanged instead of full regen
         }}
       >
         <CircularSlider
@@ -343,6 +419,7 @@ const FreqSlider = ({ sketchState, setSketchState, stateKey }) => {
           min={0}
           max={degPerExp - 1}
           knobColor="#AAA"
+          knobSize={60}
           label="Fundamental Frequency"
           renderLabelValue={
             <input
@@ -351,40 +428,37 @@ const FreqSlider = ({ sketchState, setSketchState, stateKey }) => {
                 background: 'none',
                 border: 'none',
                 color: 'white',
-                fontSize: '2em',
+                fontSize: `${size / 100}em`,
                 left: '50%',
-                marginLeft: '-35%',
+                marginLeft: '-40%',
                 marginTop: '-0.5em',
                 position: 'absolute',
                 textAlign: 'center',
                 top: '50%',
-                width: '70%',
+                width: '80%',
                 zIndex: 3,
               }}
-              value={state.txt}
+              value={isInt ? state.numberInputVal : state.numberInputVal.toPrecision(precision)}
               onChange={ev => {
                 setState({
                   ...state,
-                  txt: Number(ev.target.value),
+                  numberInputVal: Number(ev.target.value),
                 });
               }}
               onKeyDown={({ key }) => {
                 if (key === 'Enter') {
-                  const freq = Math.max(state.txt, Number.MIN_VALUE);
-                  const logFreq = Math.log2(freq);
-                  const exp = Math.floor(logFreq);
+                  const nextState = valToState(state.numberInputVal);
+                  setState(nextState);
+                  _.defer(() => { // hack because react-circle-slider invokes the onChange callback when its knob position changes even via props
+                    setState(nextState);
 
-                  setState({
-                    deg: Math.floor(degPerExp * (logFreq - exp)),
-                    exp,
-                    txt: freq,
-                  });
+                    setSketchState(state => ({
+                      ...state,
+                      [stateKey]: nextState.numberInputVal,
+                      isRegenNeeded: isRegenRequired,
+                    }));
+                  })
 
-                  setSketchState(state => ({
-                    ...state,
-                    [stateKey]: freq,
-                    isRegenNeeded: true,
-                  }));
                 }
               }}
             />
@@ -394,7 +468,8 @@ const FreqSlider = ({ sketchState, setSketchState, stateKey }) => {
           progressColorTo={HSVtoHex((state.exp + 1) / 15, 1, 1)}
           progressLineCap="flat"
           trackColor="#666"
-          valueFontSize="4rem"
+          height={size}
+          width={size}
         />
 
       </div>
