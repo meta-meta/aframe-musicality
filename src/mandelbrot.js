@@ -107,7 +107,24 @@ const Mandelbrot = () => {
 
   const {midiClockInDevice} = useMidiClock(() => {
     if (sketchInstance) {
+      if (!sketchInstance.state.isPlaying) {
+        setSketchState(state => ({
+          ...state,
+          isPlaying: true,
+        }));
+      }
       sketchInstance.incrementTick(true);
+    }
+  }, () => {
+    setSketchState(state => ({
+      ...state,
+      isPlaying: false,
+    }));
+  }, (beat) => {
+    if (sketchInstance) {
+      const { midiClocksPerTick } = sketchInstance.state;
+      sketchInstance.state.midiClock = beat;
+      sketchInstance.state.tick = Math.floor(beat / midiClocksPerTick);
     }
   });
 
@@ -245,7 +262,9 @@ const Mandelbrot = () => {
           />
 
           {midiClockInDevice ? (
-            <FreqSlider // TODO: integers
+            <FreqSlider
+              key={midiClockInDevice}
+              isInt
               min={1}
               max={1024}
               initialVal={24}
@@ -257,6 +276,7 @@ const Mandelbrot = () => {
             />
           ) : (
             <FreqSlider
+              key={midiClockInDevice}
               initialVal={100}
               label="Tick duration (ms)"
               size={120}
@@ -347,10 +367,7 @@ const FreqSlider = ({
   const degPerExp = 2048;
   const errMargin = degPerExp / 3;
 
-  const constrainVal = val => {
-    const v = Math.min(Math.max(val, min), max);
-    return isInt ? Math.round(v) : v;
-  }
+  const constrainVal = val => Math.min(Math.max(isInt ? Math.round(val) : val, min), max);
 
   const valToState = val => {
     const freq = constrainVal(val);

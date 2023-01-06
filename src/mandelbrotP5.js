@@ -635,9 +635,9 @@ export const sketch = (p5) => {
       p5.state.midiClock++;
     }
 
-    const isReady = isPlaying && !isRegenNeeded && (isExternal
+    const isReady = !isRegenNeeded && (isExternal
       ? p5.state.midiClock % midiClocksPerTick === 0
-      : now > tickLastMillis + tickDuration);
+      : isPlaying && now > tickLastMillis + tickDuration);
 
     if (isReady) {
       p5.state.tick++;
@@ -645,7 +645,7 @@ export const sketch = (p5) => {
       cursorExcite(0);
     }
 
-    if (!isExternal) window.setZeroTimeout(p5.incrementTick)
+    if (!isExternal && p5.state.midiClock === 0) window.setZeroTimeout(p5.incrementTick)
   }
 
   let prevTick = 0;
