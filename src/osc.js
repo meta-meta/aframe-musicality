@@ -4,18 +4,19 @@ import React, {useEffect} from 'react';
 import useOsc from './useOsc';
 import PC from "./pc";
 
-const Osc = () => {
+// TODO: where is this being used?? Use this to communicate with Unity: Add <Osc oscHost={{port: unityPOrt}}/> OSC mapping as props
+// mandelbrot/cmd/setFullscreen  =>  window.document.documentElement.requestFullscreen()
 
+const Osc = ({ oscHost = {
+  host: window.location.hostname,
+  port: '8080',
+} }) => {
   const [state, actions] = useOsc(
     ({beat, midi, oscHost, seq}) => ({beat, midi, oscHost, seq}), // https://github.com/andregardi/use-global-hook#avoid-unnecessary-renders
     actions => actions,
   );
 
   useEffect(() => {
-    const oscHost = {
-      host: window.location.hostname,
-      port: '8080',
-    };
     const osc = new OSC({
       plugin: new OSC.WebsocketClientPlugin(oscHost),
     });
