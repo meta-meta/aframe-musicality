@@ -55,6 +55,7 @@ import _ from 'lodash';
 
 
 export const initialState = {
+  audioPan: 0, // -1 - 1
   decayDuration: 1000,
   exciteEnergy: 0.05,
   exciteDuration: 50,
@@ -117,9 +118,11 @@ let audioCtx = new AudioContext();
 let oscs = [];
 
 const masterGain = audioCtx.createGain();
+const audioPanner = audioCtx.createStereoPanner();
 window.masterGain = masterGain;
 masterGain.gain.value = 1;
-masterGain.connect(audioCtx.destination);
+masterGain.connect(audioPanner);
+audioPanner.connect(audioCtx.destination);
 
 
 export const sketch = (p5) => {
@@ -516,6 +519,7 @@ export const sketch = (p5) => {
 
   const cursorExcite = (id) => {
     const {
+      audioPan,
       decayDuration,
       exciteEnergy,
       exciteDuration,
@@ -523,6 +527,8 @@ export const sketch = (p5) => {
       partials,
       tick,
     } = p5.state;
+
+    audioPanner.pan.value = audioPan;
 
     const d = tick % hilbMand.length;
     const {p} = hilbMand[d];
