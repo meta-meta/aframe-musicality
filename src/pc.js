@@ -6,6 +6,7 @@ const PC = ({
   classes,
   isOdd,
   isSolfege = false,
+  showOctave = false,
   n,
   style = isSolfege ? {
     borderStyle: 'solid',
@@ -18,6 +19,13 @@ const PC = ({
     style={style}
   >
     {isSolfege ? toSolfege(n) : toSymbol(n)}
+    {showOctave && (
+      <div style={{
+        bottom: '15%',
+        fontSize: '0.4em',
+        position: 'absolute',
+        right: '10%',
+      }} >{Math.floor(n / 12)}</div>)}
   </Cell>
 )
 

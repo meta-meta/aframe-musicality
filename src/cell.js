@@ -12,11 +12,11 @@ const Cell = withStyles({
     width: cellSize,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
     // border: '1px solid',
   },
   odd: {
     left: cellSize / 2,
-    position: 'relative',
   }
 })(({children, classes, className = '', isOdd, style}) => (
   <div
