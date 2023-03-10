@@ -3,6 +3,7 @@ import Cell from './cell';
 import PC from './pc';
 import React, {useCallback, useEffect, useState} from 'react';
 import {HSVtoHex} from './color';
+import useMidi from './useMidi';
 // import {Hsluv} from 'hsluv'; // FIXME ts loader
 import {toSolfege, toSymbol} from './util';
 
@@ -16,7 +17,20 @@ const hslToHex = (h, s, l) => {
   return _hsluv.hex;
 };
 
+const hslToRgb = (h, s, l) => {
+  _hsluv = _hsluv || new window.Hsluv();
+  _hsluv.hsluv_h = (h * 360 + 12.2) % 360;
+  _hsluv.hsluv_s = s * 100;
+  _hsluv.hsluv_l = l * 100;
+  _hsluv.hsluvToRgb();
+  return [_hsluv.rgb_r * 255, _hsluv.rgb_g * 255, _hsluv.rgb_b * 255];
+};
+
 const pcSetOpts = [
+  {
+    label: 'Nothing',
+    val: [],
+  },
   {
     label: 'Diatonic Scale',
     val: [0, 2, 4, 5, 7, 9, 11],
@@ -153,47 +167,86 @@ _.range(5).forEach(boardIndex => {
       };
 
       note++;
-    })
-  })
+    });
+  });
 
-})
-
-// _.forEach(lumatoneRowLengths, (row, y) => {
-//   boardsOnGrid[y] = [];
-//   const rowStartX = lumatoneRowStarts[y];
-//
-//   _.range(rowStartX, rowStartX + lumatoneRowLengths[y]).forEach(x => {
-//     boardsOnGrid[y][x] =
-//   })
-// })
+});
 
 
-const getBoardAndNote = (xRaw, y) => {
-  const rowStartX = lumatoneRowStarts[y];
-  const x = x - rowStartX;
+const lumatone = () => {
 
-
-  // const boardStartRow =
 
 };
+
+const setColor = (lumatoneIn, lumatoneOut, board, key, r, g, b) => new Promise((res) => {
+  const mfid = [0x00, 0x21, 0x50]; // Embodme according to https://www.midi.org/specifications-old/item/manufacturer-id-numbers
+  const setKeyColor = 0x01;
+  console.log('setcolor', r, g, b);
+
+  lumatoneIn.addOneTimeListener('sysex', () => {
+    // console.log('ack');
+    res();
+  });
+  lumatoneOut.sendSysex(mfid, [board, setKeyColor, key, r >> 4, r & 0xf, g >> 4, g & 0xf, b >> 4, b & 0xf]);
+});
+
+/**
+ *
+ *
+ *
+ * @param lumatoneIn
+ * @param lumatoneOut
+ * @param board
+ * @param key
+ * @param note
+ * @param midiChannel
+ * @param typeByte  disabledDefault = 0, noteOnNoteOff = 1,  continuousController = 2, lumaTouch = 3, disabled = 4
+ * @returns {Promise<unknown>}
+ */
+const setNote = (lumatoneIn, lumatoneOut, board, key, note, midiChannel = 1, typeByte = 1) => new Promise((res) => {
+  const mfid = [0x00, 0x21, 0x50]; // Embodme according to https://www.midi.org/specifications-old/item/manufacturer-id-numbers
+  const setKeyNote = 0x00;
+  console.log('setnote', lumatoneIn, lumatoneOut);
+
+  lumatoneIn.addOneTimeListener('sysex', () => {
+    // console.log('ack');
+    res();
+  });
+  lumatoneOut.sendSysex(mfid, [board, setKeyNote, key, Math.min(127, Math.max(0, note)), midiChannel, typeByte]);
+});
+
 
 // http://www.altkeyboards.com/instruments/isomorphic-keyboards
 const layoutOpts = [
   {
-    label: 'Wicki-Hayden',
-    val: (x, y) => !(y % 2 === 1)
-      ? (x * 2)
-      : (x * 2 + 7)
+    label: 'Harmonic table',
+    val: (x, y) => (
+      (y % 2 === 0
+          ? (8 - y) * 6 + x * 4// + (x > 12 ? 24 : 0)
+          : (8 - y) * 6 + x * 4 - 1 //+ (x > 12 ? 24 : 0)
+      ))
   },
   {
-    label: 'Harmonic table',
-    val: (x, y) => ((y % 2 > 0
-      ? ((y - 1) / 2) * 11 + 3
-      : (y / 2) * 11) + x * 7)/* % 12*/
+    label: 'Wicki-Hayden',
+    val: (x, y) => y % 2 === 0
+      ? ((12 - y) * 6 + x * 2) + (x > 12 ? 24 : 0)
+      : (12 - y) * 6 + x * 2 + 1 + (x > 12 ? 24 : 0)
   },
+
+];
+
+const getColorHsl = (n, isHighlighted = false) => [
+  ((n * 5) % 12) / 12,
+  Math.max(0, 1 - n / 256),
+  isHighlighted ? 0.4 : Math.max(0.1, n / 256),
 ];
 
 const Tonnetz = ({rows = lumatoneRowLengths}) => {
+
+  const [{inputDevices, outputDevices}] = useMidi();
+  const lumaIn = inputDevices.find(({name}) => name === 'LM-Lumatone-in');
+  const lumaOut = outputDevices.find(({name}) => name === 'LM-Lumatone-out');
+
 
   const [layoutKey, setLayoutKey] = useState(0);
   const {val: layout} = layoutOpts[layoutKey];
@@ -201,20 +254,32 @@ const Tonnetz = ({rows = lumatoneRowLengths}) => {
   const [pcSetKey, setPcSetKey] = useState(0);
   const {val: pcSet} = pcSetOpts[pcSetKey];
 
+
   useEffect(() => {
-    _.range(rows.length).forEach(y => {
-      const rowStartX = lumatoneRowStarts[y];
-      _.range(rowStartX, rows[y] + rowStartX).forEach(x => {
-        const lumaKey = boardsOnGrid[y][x];
-        if (lumaKey) {
-          const { boardNum, note } = lumaKey;
-          const n = layout(x, y);
-          const color = hslToHex(((n * 5) % 12) / 12, 1, 0.1)
-          console.log('board', boardNum, 'lumaKey', note, n, color)
+    if (!lumaIn || !lumaOut) return;
+
+    const changeColors = async () => {
+      for (const y of _.range(rows.length)) {
+        const rowStartX = lumatoneRowStarts[y];
+
+        for (const x of _.range(rowStartX, rows[y] + rowStartX)) {
+          const lumaKey = boardsOnGrid[y][x];
+          if (lumaKey) {
+            const {boardNum, note} = lumaKey;
+            const n = layout(x, y);
+// console.log(n, 1 - Math.floor(n/12) / 5 )
+            const [r, g, b] = hslToRgb(...getColorHsl(n));
+            await setColor(lumaIn, lumaOut, boardNum, note, r, g, b);
+            await setNote(lumaIn, lumaOut, boardNum, note, n);
+            // console.log('board', boardNum, 'lumaKey', note, n, color)
+          }
         }
-      });
-    })
-  }, [layoutKey, pcSetKey]);
+      }
+    };
+
+    changeColors().catch(e => console.log(e));
+
+  }, [layoutKey, pcSetKey, lumaIn, lumaOut]);
 
   return (
     <div style={{
@@ -272,10 +337,10 @@ const Tonnetz = ({rows = lumatoneRowLengths}) => {
                       showOctave
                       style={{
                         // border: `solid ${1}px`,
-                        border: `solid ${isInPcSet ? 3 : 1}px`,
+                        border: `solid 1px`,
                         borderRadius: '50%',
-                        // color: 'grey', //TODO: printer settings as well as mediaquery stylesheet
-                        color: hslToHex(((n * 5) % 12) / 12, 1, isInPcSet ? 0.35 : 0.3),
+                        color: isInPcSet ? 'white' : 'grey', //TODO: printer settings as well as mediaquery stylesheet
+                        backgroundColor: hslToHex(...getColorHsl(n, isInPcSet)),
                         // color: isInPcSet ? 'magenta' : 'white',
                       }}
                     />);

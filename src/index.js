@@ -15,6 +15,7 @@ import Mandolin from './mandolin';
 import Mic from './mic';
 import Midi from './midi';
 import RatioLightship from './ratioLightship';
+import {routes2d, routesVr} from './routes';
 import Staff from './staff';
 import Tonnetz from './tonnetz';
 import Ukulele from './ukulele';
@@ -23,11 +24,12 @@ import VR from './vr';
 import {
   AppBar,
   IconButton,
+  Link,
   Menu,
   MenuItem,
   Toolbar,
 } from '@material-ui/core';
-import {BrowserRouter as Router, Route, Link} from 'react-router-dom';
+import {BrowserRouter as Router, Route, Link as RouterLink} from 'react-router-dom';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import {
   Menu as MenuIcon,
@@ -106,22 +108,8 @@ const doWhenAframeLoaded = () => {
 }
 doWhenAframeLoaded();
 
-const routes2d = [
-  ['Mod12 Multiplication Tables', '/multTableMod12', MultTableMod12],
-  ['PC-Number Notepad', '/numpadMod12', NumpadMod12],
-  ['OSC Dataviz', '/osc', OSC, true],
-  ['PC Tonnetz', '/tonnetz', Tonnetz],
-  ['Banjo PCs', '/banjo', Banjo],
-  ['Guitar PCs', '/guitar', Guitar],
-  ['Mandolin PCs', '/mandolin', Mandolin],
-  ['Ukulele PCs', '/ukulele', Ukulele],
-  ['Staff', '/staff', Staff],
-  ['Mandelbrot', '/mandelbrot', Mandelbrot],
-  ['Ratio Lightship', '/ratioLightship', RatioLightship],
-];
-
 const App = () => {
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const prefersDarkMode = true// useMediaQuery('(prefers-color-scheme: dark)');
 
   const neutral = {
     palette: { // https://material-ui.com/customization/palette/
@@ -138,10 +126,10 @@ const App = () => {
   const dark = {
     palette: { // https://material-ui.com/customization/palette/
       action: {
-        active: '#660000',
+        active: '#600',
       },
       primary: {
-        main: '#330033'
+        main: '#c0e'
       },
       type: 'dark',
     },
@@ -212,23 +200,18 @@ const App = () => {
               onClose={handleMenuClose}
             >
               <MenuItem>
-                <Link style={{ color: 'lightgrey'}} onClick={handleMenuClose} to="/">Introduction</Link>
+                <Link component={RouterLink} style={{ color: 'lightgrey'}} onClick={handleMenuClose} to="/">Introduction</Link>
               </MenuItem>
               <MenuItem disabled divider >2D</MenuItem>
               {routes2d.map(([title, url, component, isDevOnly], idx) => !isDevOnly && (
                 <MenuItem key={idx}>
-                  <Link style={{ color: 'darkmagenta'}} onClick={handleMenuClose} to={url}>{title}</Link>
+                  <Link color="primary" component={RouterLink} onClick={handleMenuClose} to={url}>{title}</Link>
                 </MenuItem>
               ))}
               <MenuItem disabled divider>VR</MenuItem>
-              {[
-                ['Coltrane Circle', '/vr/coltrane'],
-                ['Dod', '/vr/dod'],
-                ['PitchClassCollections', '/vr/pitchClassCollections'],
-                ['PitchClassSpiral', '/vr/pitchClassSpiral'],
-              ].map(([title, url], idx) => (
+              {routesVr.map(([title, url], idx) => (
                 <MenuItem key={idx}>
-                  <Link style={{ color: 'cyan'}} onClick={handleMenuClose} to={url}>{title}</Link>
+                  <Link color="secondary" component={RouterLink} onClick={handleMenuClose} to={url}>{title}</Link>
                 </MenuItem>
               ))}
             </Menu>

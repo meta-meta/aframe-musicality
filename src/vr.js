@@ -1,4 +1,4 @@
-import 'aframe-touch-look-controls';
+// import 'aframe-touch-look-controls'; FIXME
 import Camera from './camera';
 import ColtraneCircle from "./coltraneCircle";
 import Dod from './dod';
@@ -7,6 +7,7 @@ import PitchClassSpiral from "./pitchClassSpiral";
 import React from 'react';
 import {Entity, Scene} from 'aframe-react';
 import {Route, Switch} from 'react-router-dom';
+import {routesVr} from './routes';
 
 // Note: needs https to enter VR
 
@@ -19,11 +20,12 @@ const VR = ({match: {path}}) => (
       {/*<img id="skyTexture" src="https://cdn.aframe.io/a-painter/images/sky.jpg"/>*/}
     </a-assets>
 
-    <Switch>
-      <Route path={`${path}/coltrane`} component={ColtraneCircle}/>
-      <Route path={`${path}/dod`} component={Dod}/>
-      <Route path={`${path}/pitchClassCollections`} component={PitchClassCollections}/>
-      <Route path={`${path}/pitchClassSpiral`} component={PitchClassSpiral}/>
+    <Switch
+      // FIXME: used to be <Route path={`${path}/pitchClassSpiral`} component={PitchClassSpiral}/>
+    >
+      {routesVr.map(([title, path, component], key) => (
+        <Route {...{ component, key, path }} />
+      ))}
     </Switch>
 
 

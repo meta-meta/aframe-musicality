@@ -2,8 +2,9 @@ import _ from 'lodash';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import React, {useEffect} from 'react';
+import MidiIcon from './icons/midiIcon';
 import useMidi from './useMidi';
-import WebMidi from 'webmidi';
+import {WebMidi} from 'webmidi';
 import {IconButton, Toolbar} from "@material-ui/core";
 import {WatchLater as MidiClockIcon} from '@material-ui/icons';
 
@@ -15,7 +16,14 @@ const Midi = () => {
       isMidiClockInSelectorOpen,
       isMidiInSelectorOpen,
       midiInDevice,
-    }) => ({inputDevices, isMidiClockInSelectorOpen, isMidiInSelectorOpen, midiInDevice}),
+      outputDevices,
+    }) => ({
+      inputDevices,
+      isMidiClockInSelectorOpen,
+      isMidiInSelectorOpen,
+      midiInDevice,
+      outputDevices,
+    }),
     actions => actions,
   );
 
@@ -24,6 +32,7 @@ const Midi = () => {
     isMidiClockInSelectorOpen,
     isMidiInSelectorOpen,
     midiInDevice,
+    outputDevices,
   } = state;
 
   useEffect(() => {
@@ -32,6 +41,7 @@ const Midi = () => {
       else {
         console.log('WebMidi enabled.');
         actions.setInputDevices(WebMidi.inputs);
+        actions.setOutputDevices(WebMidi.outputs);
       }
     }, true);
   }, []);
@@ -91,7 +101,7 @@ const Midi = () => {
         aria-label="open drawer"
         onClick={handleMidiMenuButtonClick(false)}
       >
-        <img src="noun_MIDI_385872.svg" style={{ width: '1.5em', height: '1.5em'}} />
+        <MidiIcon/>
       </IconButton>
 
       <IconButton

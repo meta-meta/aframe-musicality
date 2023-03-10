@@ -2,6 +2,10 @@ import _ from 'lodash';
 import React from 'react';
 import globalHook from 'use-global-hook';
 
+const midiIn = _.zipObject(
+  _.range(128),
+  _.fill(new Array(128), 0));
+
 const initialState = {
   input: undefined,
   inputDevices: [],
@@ -9,14 +13,16 @@ const initialState = {
   isMidiInSelectorOpen: false,
   midiClockInDevice: undefined,
   midiInDevice: undefined,
-  midiIn: _.zipObject(
-    _.range(128),
-    _.fill(new Array(128), 0)),
+  midiIn,
+  outputDevices: [],
 };
 
 const actions = {
   setInputDevices: (store, inputDevices) =>
     store.setState({inputDevices}),
+
+  setOutputDevices: (store, outputDevices) =>
+    store.setState({outputDevices}),
 
   setMidiEvent: (store, midiEvt) =>
     store.setState({midiIn: _.merge(store.state.midiIn, midiEvt)}),
