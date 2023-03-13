@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import Cell from './cell';
+import LumatoneKeySync from './lumatoneKeySync';
 import PC from './pc';
 import React, {useCallback, useEffect, useState} from 'react';
 import {HSVtoHex} from './color';
@@ -62,6 +63,12 @@ const pcSetOpts = [
   {
     label: 'Augmented Triad',
     val: [0, 4, 8],
+  },
+  {
+    label: `'S Wonderful`,
+    val: [53, 55, 57],
+    // val: [5, 7, 9],
+    // val: [0, 4, 5, 6, 7, 9, 10],
   },
 ];
 
@@ -235,10 +242,10 @@ const layoutOpts = [
 
 ];
 
-const getColorHsl = (n, isHighlighted = false) => [
+const getColorHsl = (n, isHighlighted = false, isFaded = false) => [
   ((n * 5) % 12) / 12,
-  Math.max(0, 1 - n / 256),
-  isHighlighted ? 0.4 : Math.max(0.1, n / 256),
+  isFaded ? 0.2 : Math.max(0, 1 - n / 256),
+  isHighlighted ? 0.50 : Math.max(0.05, n / 512),
 ];
 
 const Tonnetz = ({rows = lumatoneRowLengths}) => {
@@ -252,34 +259,45 @@ const Tonnetz = ({rows = lumatoneRowLengths}) => {
   const {val: layout} = layoutOpts[layoutKey];
 
   const [pcSetKey, setPcSetKey] = useState(0);
-  const {val: pcSet} = pcSetOpts[pcSetKey];
+  const {val: pitchSet} = pcSetOpts[pcSetKey];
+  const pcSet = pitchSet.map(p => p % 12);
 
 
-  useEffect(() => {
-    if (!lumaIn || !lumaOut) return;
+//   useEffect(() => {
+//     if (!lumaIn || !lumaOut) return;
+//
+//     const changeColors = async () => {
+//       for (const y of _.range(rows.length)) {
+//         const rowStartX = lumatoneRowStarts[y];
+//
+//         for (const x of _.range(rowStartX, rows[y] + rowStartX)) {
+//           const lumaKey = boardsOnGrid[y][x];
+//           if (lumaKey) {
+//             const {boardNum, note} = lumaKey;
+//             const n = layout(x, y);
+// // console.log(n, 1 - Math.floor(n/12) / 5 )
+//
+//
+//
+//             const [r, g, b] = hslToRgb(...colorHsl);
+//             await setColor(lumaIn, lumaOut, boardNum, note, r, g, b);
+//             // await setNote(lumaIn, lumaOut, boardNum, note, n);
+//
+//
+//             // const typeByteCC =  (true << 4) | 2;   // (faderUpIsNull << 4) | keyType
+//             // await setNote(lumaIn, lumaOut, boardNum, note, n, 1, typeByteCC); // cc
+//
+//             await setNote(lumaIn, lumaOut, boardNum, note, n);
+//             // console.log('board', boardNum, 'lumaKey', note, n, color)
+//           }
+//         }
+//       }
+//     };
+//
+//     changeColors().catch(e => console.log(e));
+//
+//   }, [layoutKey, pcSetKey, lumaIn, lumaOut]);
 
-    const changeColors = async () => {
-      for (const y of _.range(rows.length)) {
-        const rowStartX = lumatoneRowStarts[y];
-
-        for (const x of _.range(rowStartX, rows[y] + rowStartX)) {
-          const lumaKey = boardsOnGrid[y][x];
-          if (lumaKey) {
-            const {boardNum, note} = lumaKey;
-            const n = layout(x, y);
-// console.log(n, 1 - Math.floor(n/12) / 5 )
-            const [r, g, b] = hslToRgb(...getColorHsl(n));
-            await setColor(lumaIn, lumaOut, boardNum, note, r, g, b);
-            await setNote(lumaIn, lumaOut, boardNum, note, n);
-            // console.log('board', boardNum, 'lumaKey', note, n, color)
-          }
-        }
-      }
-    };
-
-    changeColors().catch(e => console.log(e));
-
-  }, [layoutKey, pcSetKey, lumaIn, lumaOut]);
 
   return (
     <div style={{
@@ -318,7 +336,10 @@ const Tonnetz = ({rows = lumatoneRowLengths}) => {
                 }),
                 ..._.range(rowStartX, rows[y] + rowStartX).map(x => {
                   const n = layout(x, y);
+
                   const isInPcSet = _.includes(pcSet, n % 12);
+                  const isInPitchSet = _.includes(pitchSet, n);
+                  const colorHsl = getColorHsl(n, isInPitchSet, !isInPcSet);
 
                   // return (
                   //   <
@@ -330,20 +351,35 @@ const Tonnetz = ({rows = lumatoneRowLengths}) => {
                   //   </Cell>);
 
                   return (
-                    <PC
-                      key={x}
-                      n={n}
-                      isOdd={isOdd}
-                      showOctave
-                      style={{
-                        // border: `solid ${1}px`,
-                        border: `solid 1px`,
-                        borderRadius: '50%',
-                        color: isInPcSet ? 'white' : 'grey', //TODO: printer settings as well as mediaquery stylesheet
-                        backgroundColor: hslToHex(...getColorHsl(n, isInPcSet)),
-                        // color: isInPcSet ? 'magenta' : 'white',
-                      }}
-                    />);
+                    <>
+                      <PC
+                        key={x}
+                        n={n}
+                        isOdd={isOdd}
+                        showOctave
+                        style={{
+                          // border: `solid ${1}px`,
+                          border: `solid 1px`,
+                          borderRadius: '50%',
+                          color: isInPcSet ? 'white' : 'grey', //TODO: printer settings as well as mediaquery stylesheet
+                          backgroundColor: hslToHex(...colorHsl),
+                          // color: isInPcSet ? 'magenta' : 'white',
+                        }}
+                      />
+                      <LumatoneKeySync
+                        colorHsl={colorHsl}
+                        h={colorHsl[0]}
+                        key={`keysync-${x}`}
+                        l={colorHsl[2]}
+                        lumaIn={lumaIn}
+                        lumaOut={lumaOut}
+                        n={n}
+                        s={colorHsl[1]}
+                        x={x}
+                        y={y}
+                      />
+                    </>
+                  );
                 })
               ]}
               <br/>
