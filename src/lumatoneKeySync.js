@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 // import {Hsluv} from 'hsluv'; // FIXME ts loader
 
 let _hsluv;
@@ -134,6 +134,9 @@ const changePush = async (ch) => {
   isPopping = false;
 };
 
+// light note on touch and fade
+
+
 
 /**
  *
@@ -160,6 +163,7 @@ const LumatoneKeySync = ({
   x,
   y,
 }) => {
+  const [playedTimeoutId, setPlayedTimeoutId] = useState();
 
   useEffect(() => {
     if (!lumaIn || !lumaOut) return;
@@ -180,6 +184,41 @@ const LumatoneKeySync = ({
 
       changePush(() => setNote(lumaIn, lumaOut, boardNum, note, n));
       // console.log('board', boardNum, 'lumaKey', note, n, color)
+
+
+      const noteListener = (e) => {
+        const {dataBytes: [nPlayed, vPlayed]} = e;
+        const repeatCount = 5;
+        if (nPlayed === n) {
+          let repeat = repeatCount;
+          const pushChanges = () => {
+
+            const [r, g, b] = hslToRgb(h,s, l + (1-l)*(repeat / repeatCount));
+            changePush(() => setColor(lumaIn, lumaOut, boardNum, note, r, g, b));
+
+            if (repeat > 0) {
+              if (playedTimeoutId) {
+                clearTimeout(playedTimeoutId);
+                setPlayedTimeoutId(undefined);
+              }
+
+              const timeoutId = setTimeout(pushChanges, 500);
+              setPlayedTimeoutId(timeoutId);
+            }
+          };
+        }
+      };
+
+      lumaIn.addListener('noteon', noteListener);
+
+      return () => {
+        if (playedTimeoutId) {
+          clearTimeout(playedTimeoutId);
+          setPlayedTimeoutId(undefined);
+        }
+        lumaIn.removeListener('noteon', noteListener);
+      }
+
     }
   });
 
