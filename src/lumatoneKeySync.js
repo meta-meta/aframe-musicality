@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 // import {Hsluv} from 'hsluv'; // FIXME ts loader
 
 let _hsluv;
@@ -118,17 +118,17 @@ const setNote = (lumatoneIn, lumatoneOut, board, key, note, midiChannel = 1, typ
   lumatoneOut.sendSysex(mfid, [board, setKeyNote, key, Math.min(127, Math.max(0, note)), midiChannel, typeByte]);
 });
 
-const changeStack = [];
+const changeBuffer = [];
 let isPopping = false;
 
 const changePush = async (ch) => {
-  changeStack.push(ch);
+  changeBuffer.push(ch);
 
   if (isPopping) return;
 
   let chPop;
   isPopping = true;
-  while (chPop = changeStack.pop()) {
+  while (chPop = changeBuffer.shift()) {
     await chPop();
   }
   isPopping = false;
@@ -160,7 +160,6 @@ const LumatoneKeySync = ({
   x,
   y,
 }) => {
-
   useEffect(() => {
     if (!lumaIn || !lumaOut) return;
 
@@ -180,8 +179,55 @@ const LumatoneKeySync = ({
 
       changePush(() => setNote(lumaIn, lumaOut, boardNum, note, n));
       // console.log('board', boardNum, 'lumaKey', note, n, color)
+
+      let timeoutId;
+      const maxL = 0.45;
+
+      const handleNoteOff = (e) => {
+        const {dataBytes: [nPlayed, vPlayed]} = e;
+
+        const repeatCount = 5;
+        if (nPlayed === n) {
+          let repeat = repeatCount;
+          const pushChanges = () => {
+
+            const [r, g, b] = hslToRgb(h, s + (1-s)*(repeat / repeatCount), l + (maxL-l)*(repeat / repeatCount));
+
+            changePush(() => setColor(lumaIn, lumaOut, boardNum, note, r, g, b));
+
+            if (repeat > 0) {
+              repeat--;
+
+              clearTimeout(timeoutId);
+              timeoutId = setTimeout(pushChanges, 200 * repeat);
+            }
+          };
+
+          pushChanges();
+        }
+      };
+
+      const handleNoteOn = (e) => {
+        const {dataBytes: [nPlayed, vPlayed]} = e;
+
+        if (nPlayed === n) {
+          clearTimeout(timeoutId);
+          const [r, g, b] = hslToRgb(h, 1, maxL);
+          changePush(() => setColor(lumaIn, lumaOut, boardNum, note, r, g, b));
+        }
+      };
+
+      lumaIn.addListener('noteon', handleNoteOn);
+      lumaIn.addListener('noteoff', handleNoteOff);
+
+      return () => {
+        clearTimeout(timeoutId);
+        lumaIn.removeListener('noteon', handleNoteOn);
+        lumaIn.removeListener('noteoff', handleNoteOff);
+      }
+
     }
-  });
+  }, [h, l, lumaIn, lumaOut, n, s, x, y,]);
 
   return null;
 }

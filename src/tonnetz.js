@@ -226,18 +226,19 @@ const setNote = (lumatoneIn, lumatoneOut, board, key, note, midiChannel = 1, typ
 // http://www.altkeyboards.com/instruments/isomorphic-keyboards
 const layoutOpts = [
   {
+    label: 'Wicki-Hayden',
+    val: (x, y) => y % 2 === 0
+      ? ((12 - y) * 6 + x * 2) + (x > 12 ? 24 : 0)
+      : (12 - y) * 6 + x * 2 + 1 + (x > 12 ? 24 : 0)
+  },
+
+  {
     label: 'Harmonic table',
     val: (x, y) => (
       (y % 2 === 0
           ? (8 - y) * 6 + x * 4// + (x > 12 ? 24 : 0)
           : (8 - y) * 6 + x * 4 - 1 //+ (x > 12 ? 24 : 0)
       ))
-  },
-  {
-    label: 'Wicki-Hayden',
-    val: (x, y) => y % 2 === 0
-      ? ((12 - y) * 6 + x * 2) + (x > 12 ? 24 : 0)
-      : (12 - y) * 6 + x * 2 + 1 + (x > 12 ? 24 : 0)
   },
 
 ];
@@ -251,6 +252,7 @@ const getColorHsl = (n, isHighlighted = false, isFaded = false) => [
 const Tonnetz = ({rows = lumatoneRowLengths}) => {
 
   const [{inputDevices, outputDevices}] = useMidi();
+  const xTouchIn = inputDevices.find(({name}) => name === 'LM-X-Touch-CS-in');
   const lumaIn = inputDevices.find(({name}) => name === 'LM-Lumatone-in');
   const lumaOut = outputDevices.find(({name}) => name === 'LM-Lumatone-out');
 
@@ -259,8 +261,43 @@ const Tonnetz = ({rows = lumatoneRowLengths}) => {
   const {val: layout} = layoutOpts[layoutKey];
 
   const [pcSetKey, setPcSetKey] = useState(0);
-  const {val: pitchSet} = pcSetOpts[pcSetKey];
-  const pcSet = pitchSet.map(p => p % 12);
+  const [pitchSet, setPitchSet] = useState({});
+  // const {val: pitchSet} = pcSetOpts[pcSetKey];
+  // const pcSet = pitchSet.map(p => p % 12);
+
+  useEffect(() => {
+    if (!xTouchIn || !lumaIn) return;
+
+    const notesCurr = {};
+
+    const handleNoteOn = (e) => {
+      const {dataBytes: [nPlayed, vPlayed]} = e;
+      notesCurr[nPlayed] = true;
+    };
+
+    const handleNoteOff = (e) => {
+      const {dataBytes: [nPlayed, vPlayed]} = e;
+      notesCurr[nPlayed] = false;
+    };
+
+    const handlePedalDown = (e) => {
+      const {dataBytes: [nPlayed, vPlayed]} = e;
+      if (nPlayed === 103) {
+        setPitchSet({...notesCurr});
+        console.log(notesCurr);
+      }
+    };
+
+    xTouchIn.addListener('noteoff', handlePedalDown);
+    lumaIn.addListener('noteon', handleNoteOn);
+    lumaIn.addListener('noteoff', handleNoteOff);
+
+    return () => {
+      xTouchIn.removeListener('noteoff', handlePedalDown);
+      lumaIn.removeListener('noteon', handleNoteOn);
+      lumaIn.removeListener('noteoff', handleNoteOff);
+    }
+  }, [lumaIn, xTouchIn])
 
 
 //   useEffect(() => {
@@ -337,8 +374,8 @@ const Tonnetz = ({rows = lumatoneRowLengths}) => {
                 ..._.range(rowStartX, rows[y] + rowStartX).map(x => {
                   const n = layout(x, y);
 
-                  const isInPcSet = _.includes(pcSet, n % 12);
-                  const isInPitchSet = _.includes(pitchSet, n);
+                  const isInPcSet = true// _.includes(pcSet, n % 12);
+                  const isInPitchSet = pitchSet[n];
                   const colorHsl = getColorHsl(n, isInPitchSet, !isInPcSet);
 
                   // return (
@@ -367,7 +404,6 @@ const Tonnetz = ({rows = lumatoneRowLengths}) => {
                         }}
                       />
                       <LumatoneKeySync
-                        colorHsl={colorHsl}
                         h={colorHsl[0]}
                         key={`keysync-${x}`}
                         l={colorHsl[2]}
