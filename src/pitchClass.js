@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 import {Entity} from 'aframe-react';
-import {HSVtoHex} from './color';
+import {getNoteColorHex, HSVtoHex} from './color';
 import {toSymbol} from "./util";
 
 const handleOsc = n => (el) => {
@@ -40,7 +40,7 @@ export default ({
     // }}
     material={{
       blending: darkened ? 'normal' : 'additive',
-      color: HSVtoHex(n / 12, 0.7, darkened ? 0 : 1),
+      color: darkened ? "#000" : getNoteColorHex(n),
       opacity: darkened ? 0.5 : 0.1,
     }}
     osc={{
@@ -58,7 +58,7 @@ export default ({
       scale={{x: 2, y: 2, z: 2}}
       text={{
         align: 'center',
-        color: HSVtoHex(n / 12, 0.75, 0.5),
+        color: getNoteColorHex(n),
         font: `../JetBrainsMono-Regular-msdf.json`,
         negate: false,
         transparent: true,

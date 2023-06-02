@@ -63,3 +63,34 @@ export function HSVtoHex(h, s, v) {
     b: Math.round(b * 255)
   });
 }
+
+
+let _hsluv;
+export const hslToHex = (h, s, l) => {
+  if (!window.Hsluv) return "#000";
+  _hsluv = _hsluv || new window.Hsluv();
+  _hsluv.hsluv_h = (h * 360 + 12.2) % 360;
+  _hsluv.hsluv_s = s * 100;
+  _hsluv.hsluv_l = l * 100;
+  _hsluv.hsluvToHex();
+  return _hsluv.hex;
+};
+
+export const hslToRgb = (h, s, l) => {
+  if (!window.Hsluv) return "#000";
+  _hsluv = _hsluv || new window.Hsluv();
+  _hsluv.hsluv_h = (h * 360 + 12.2) % 360;
+  _hsluv.hsluv_s = s * 100;
+  _hsluv.hsluv_l = l * 100;
+  _hsluv.hsluvToRgb();
+  return [_hsluv.rgb_r * 255, _hsluv.rgb_g * 255, _hsluv.rgb_b * 255];
+};
+
+export const getNoteColorHsl = (n, isHighlighted = false, isFaded = false) => [
+  ((n * 5) % 12) / 12,
+  isFaded ? 0.2 : Math.max(0, 1 - n / 256),
+  isHighlighted ? 0.50 : Math.max(0.05, n / 512),
+];
+
+export const getNoteColorHex = (n, isHighlighted = false, isFaded = false) =>
+  hslToHex(...getNoteColorHsl(n,isHighlighted,isFaded));

@@ -6,7 +6,7 @@ import React, {useCallback, useEffect, useState} from 'react';
 import useMidi from "./useMidi";
 import {Entity} from 'aframe-react';
 import {ftomf} from "./util";
-import {HSVtoHex} from "./color";
+import {getNoteColorHex, getNoteColorHsl, HSVtoHex} from './color';
 
 const audioContext = new AudioContext();
 
@@ -70,7 +70,7 @@ const PitchClassSpiral = ({
       pitchDetectEl.object3D.scale.set(s, s, s);
 
       if (_.isFinite(n)) {
-        pitchDetectEl.setAttribute('material', 'color', HSVtoHex(n / 12, 0.5, 1));
+        pitchDetectEl.setAttribute('material', 'color', getNoteColorHex(n));
       }
     };
 

@@ -109,7 +109,7 @@ const doWhenAframeLoaded = () => {
 doWhenAframeLoaded();
 
 const App = () => {
-  const prefersDarkMode = true// useMediaQuery('(prefers-color-scheme: dark)');
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
   const neutral = {
     palette: { // https://material-ui.com/customization/palette/

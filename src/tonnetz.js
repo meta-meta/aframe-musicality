@@ -3,29 +3,12 @@ import Cell from './cell';
 import LumatoneKeySync from './lumatoneKeySync';
 import PC from './pc';
 import React, {useCallback, useEffect, useState} from 'react';
-import {HSVtoHex} from './color';
+import {getNoteColorHsl, hslToHex, HSVtoHex} from './color';
 import useMidi from './useMidi';
 // import {Hsluv} from 'hsluv'; // FIXME ts loader
 import {toSolfege, toSymbol} from './util';
 
-let _hsluv;
-const hslToHex = (h, s, l) => {
-  _hsluv = _hsluv || new window.Hsluv();
-  _hsluv.hsluv_h = (h * 360 + 12.2) % 360;
-  _hsluv.hsluv_s = s * 100;
-  _hsluv.hsluv_l = l * 100;
-  _hsluv.hsluvToHex();
-  return _hsluv.hex;
-};
 
-const hslToRgb = (h, s, l) => {
-  _hsluv = _hsluv || new window.Hsluv();
-  _hsluv.hsluv_h = (h * 360 + 12.2) % 360;
-  _hsluv.hsluv_s = s * 100;
-  _hsluv.hsluv_l = l * 100;
-  _hsluv.hsluvToRgb();
-  return [_hsluv.rgb_r * 255, _hsluv.rgb_g * 255, _hsluv.rgb_b * 255];
-};
 
 const pcSetOpts = [
   {
@@ -243,12 +226,6 @@ const layoutOpts = [
 
 ];
 
-const getColorHsl = (n, isHighlighted = false, isFaded = false) => [
-  ((n * 5) % 12) / 12,
-  isFaded ? 0.2 : Math.max(0, 1 - n / 256),
-  isHighlighted ? 0.50 : Math.max(0.05, n / 512),
-];
-
 const Tonnetz = ({rows = lumatoneRowLengths}) => {
 
   const [{inputDevices, outputDevices}] = useMidi();
@@ -376,7 +353,7 @@ const Tonnetz = ({rows = lumatoneRowLengths}) => {
 
                   const isInPcSet = true// _.includes(pcSet, n % 12);
                   const isInPitchSet = pitchSet[n];
-                  const colorHsl = getColorHsl(n, isInPitchSet, !isInPcSet);
+                  const colorHsl = getNoteColorHsl(n, isInPitchSet, !isInPcSet);
 
                   // return (
                   //   <
