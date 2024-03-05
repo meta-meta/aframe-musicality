@@ -10,6 +10,7 @@ import NumpadMod12 from './numpadMod12';
 import PitchClassCollections from './pitchClassCollections';
 import PitchClassSpiral from './pitchClassSpiral';
 import RatioLightship from './ratioLightship';
+import SpiralFFT from './spiralFFT';
 import Staff from './staff';
 import Tonnetz from './tonnetz';
 import Ukulele from './ukulele';
@@ -21,6 +22,7 @@ export const routes2d = [
   ['PC Number Notepad', '/numpadMod12', NumpadMod12],
   ['PC Tonnetz', '/tonnetz', Tonnetz],
   ['Ratio Lightship', '/ratioLightship', RatioLightship],
+  ['Spiral FFT', '/spiralFFT', SpiralFFT],
   ['Staff', '/staff', Staff],
   ['Strings PCs - Banjo', '/banjo', Banjo],
   ['Strings PCs - Guitar', '/guitar', Guitar],
