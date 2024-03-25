@@ -3320,6 +3320,11 @@ csstype@^3.0.2:
   resolved "https://registry.npmjs.org/csstype/-/csstype-3.0.4.tgz"
   integrity sha512-xc8DUsCLmjvCfoD7LTGE0ou2MIWLx0K9RCZwSHMOdynqRsP4MtUcLeqh1HcQ2dInwDTqn+3CE0/FZh1et+p4jA==
 
+culori@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/culori/-/culori-4.0.1.tgz#e50e4a9104bbd1201443f29acf19af6d0a988d15"
+  integrity sha512-LSnjA6HuIUOlkfKVbzi2OlToZE8OjFi667JWN9qNymXVXzGDmvuP60SSgC+e92sd7B7158f7Fy3Mb6rXS5EDPw==
+
 custom-event-polyfill@^1.0.6:
   version "1.0.7"
   resolved "https://registry.npmjs.org/custom-event-polyfill/-/custom-event-polyfill-1.0.7.tgz"

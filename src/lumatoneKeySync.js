@@ -81,16 +81,20 @@ _.range(5).forEach(boardIndex => {
 
 });
 
-const setColor = (lumatoneIn, lumatoneOut, board, key, r, g, b) => new Promise((res) => {
+const setColor = (lumatoneIn, lumatoneOut, board, key, rNorm, gNorm, bNorm) => new Promise((res) => {
   const mfid = [0x00, 0x21, 0x50]; // Embodme according to https://www.midi.org/specifications-old/item/manufacturer-id-numbers
   const setKeyColor = 0x01;
-  console.log('setcolor', r, g, b);
+  const normTo255 = norm => Math.max(0, Math.min(255, Math.floor(norm * 255)));
+  const r = normTo255(rNorm);
+  const g = normTo255(gNorm);
+  const b = normTo255(bNorm);
 
   lumatoneIn.addOneTimeListener('sysex', () => {
     // console.log('ack');
     res();
   });
   lumatoneOut.sendSysex(mfid, [board, setKeyColor, key, r >> 4, r & 0xf, g >> 4, g & 0xf, b >> 4, b & 0xf]);
+  // console.log(`new ColorMapping(){ Board = ${board}, Key = ${key}, R = ${r}f, G = ${g}f, B = ${b}f },`)
 });
 
 /**
@@ -109,13 +113,16 @@ const setColor = (lumatoneIn, lumatoneOut, board, key, r, g, b) => new Promise((
 const setNote = (lumatoneIn, lumatoneOut, board, key, note, midiChannel = 1, typeByte = 1) => new Promise((res) => {
   const mfid = [0x00, 0x21, 0x50]; // Embodme according to https://www.midi.org/specifications-old/item/manufacturer-id-numbers
   const setKeyNote = 0x00;
-  console.log('setnote', lumatoneIn, lumatoneOut);
+  // console.log('setnote', lumatoneIn, lumatoneOut);
 
   lumatoneIn.addOneTimeListener('sysex', () => {
     // console.log('ack');
     res();
   });
   lumatoneOut.sendSysex(mfid, [board, setKeyNote, key, Math.min(127, Math.max(0, note)), midiChannel, typeByte]);
+
+  // console.log(`new NoteMapping(){ Board = ${board}, Key = ${key}, Note = ${Math.min(127, Math.max(0, note))} }, `)
+
 });
 
 const changeBuffer = [];
@@ -151,12 +158,10 @@ const changePush = async (ch) => {
  * @constructor
  */
 const LumatoneKeySync = ({
-  h,
-  l,
+  color,
   lumaIn,
   lumaOut,
   n,
-  s,
   x,
   y,
 }) => {
@@ -168,7 +173,8 @@ const LumatoneKeySync = ({
       const {boardNum, note /*note = key index of board*/} = lumaKey;
 // console.log(n, 1 - Math.floor(n/12) / 5 )
 
-      const [r, g, b] = hslToRgb(h,s,l);
+      const {r,g,b} = window.culori ? window.culori.converter('rgb')(color) : {r: 0, g: 0, b: 0};
+
       changePush(() => setColor(lumaIn, lumaOut, boardNum, note, r, g, b));
       // await setColor(lumaIn, lumaOut, boardNum, note, r, g, b);
       // await setNote(lumaIn, lumaOut, boardNum, note, n);
@@ -181,17 +187,24 @@ const LumatoneKeySync = ({
       // console.log('board', boardNum, 'lumaKey', note, n, color)
 
       let timeoutId;
-      const maxL = 0.45;
+      const maxL = 1;
 
       const handleNoteOff = (e) => {
         const {dataBytes: [nPlayed, vPlayed]} = e;
 
-        const repeatCount = 5;
+        const repeatCount = 1;
         if (nPlayed === n) {
-          let repeat = repeatCount;
+          let repeat = repeatCount - 1;
           const pushChanges = () => {
 
-            const [r, g, b] = hslToRgb(h, s + (1-s)*(repeat / repeatCount), l + (maxL-l)*(repeat / repeatCount));
+
+            const {r,g,b} = window.culori ? window.culori.converter('rgb')({
+              ...color,
+              l: color.l + (maxL-color.l)*(repeat / repeatCount),
+            }) : {r: 0, g: 0, b: 0};
+
+
+            // const [r, g, b] = hslToRgb(h, s + (1-s)*(repeat / repeatCount), l + (maxL-l)*(repeat / repeatCount));
 
             changePush(() => setColor(lumaIn, lumaOut, boardNum, note, r, g, b));
 
@@ -212,7 +225,11 @@ const LumatoneKeySync = ({
 
         if (nPlayed === n) {
           clearTimeout(timeoutId);
-          const [r, g, b] = hslToRgb(h, 1, maxL);
+          const {r,g,b} = window.culori ? window.culori.converter('rgb')({
+            ...color,
+            l: color.l + .35,
+          }) : {r: 0, g: 0, b: 0};
+
           changePush(() => setColor(lumaIn, lumaOut, boardNum, note, r, g, b));
         }
       };
@@ -227,7 +244,7 @@ const LumatoneKeySync = ({
       }
 
     }
-  }, [h, l, lumaIn, lumaOut, n, s, x, y,]);
+  }, [color.h, color.l, lumaIn, lumaOut, n, color.s, x, y,]);
 
   return null;
 }

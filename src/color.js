@@ -86,11 +86,16 @@ export const hslToRgb = (h, s, l) => {
   return [_hsluv.rgb_r * 255, _hsluv.rgb_g * 255, _hsluv.rgb_b * 255];
 };
 
-export const getNoteColorHsl = (n, isHighlighted = false, isFaded = false) => [
-  ((n * 5) % 12) / 12,
-  isFaded ? 0.2 : Math.max(0, 1 - n / 256),
-  isHighlighted ? 0.50 : Math.max(0.05, n / 512),
-];
+export const getNoteColorHsl = (n) => {
+
+  const oct = ((n - 60) / 12);
+
+  return [
+    360 * (((n * 5) % 12) / 12),
+    0.9 - (oct > 0 ? oct * .2 : 0),
+    0.4 + oct * .1,
+  ];
+};
 
 export const getNoteColorHex = (n, isHighlighted = false, isFaded = false) =>
   hslToHex(...getNoteColorHsl(n,isHighlighted,isFaded));

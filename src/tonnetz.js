@@ -1,4 +1,6 @@
+// import {formatHex} from 'culori';
 import _ from 'lodash';
+import {log2} from 'mathjs';
 import Cell from './cell';
 import LumatoneKeySync from './lumatoneKeySync';
 import PC from './pc';
@@ -8,6 +10,9 @@ import useMidi from './useMidi';
 // import {Hsluv} from 'hsluv'; // FIXME ts loader
 import {toSolfege, toSymbol} from './util';
 
+
+const {formatHex} = window.culori || {formatHex: () => "#000"};
+console.log('formatHex', formatHex)
 
 
 const pcSetOpts = [
@@ -330,75 +335,90 @@ const Tonnetz = ({rows = lumatoneRowLengths}) => {
       <br/>
       <br/>
 
-      {_.range(rows.length)
-        .map(y => {
-          const isOdd = y % 2 === 1;
-          const rowStartX = lumatoneRowStarts[y];
+      <div style={{
+        transform: 'rotate(341.5deg)'
+      }}>
+        {_.range(rows.length)
+          .map(y => {
+            const isOdd = y % 2 === 1;
+            const rowStartX = lumatoneRowStarts[y];
 
-          return (
-            <>
-              {[
-                ..._.range(rowStartX).map(x => {
-                  return (
-                    <
-                      Cell
-                      key={x}
-                      isOdd={isOdd}
-                    >
-                      &nbsp;
-                    </Cell>);
-                }),
-                ..._.range(rowStartX, rows[y] + rowStartX).map(x => {
-                  const n = layout(x, y);
-
-                  const isInPcSet = true// _.includes(pcSet, n % 12);
-                  const isInPitchSet = pitchSet[n];
-                  const colorHsl = getNoteColorHsl(n, isInPitchSet, !isInPcSet);
-
-                  // return (
-                  //   <
-                  //     Cell
-                  //     key={x}
-                  //     isOdd={isOdd}
-                  //   >
-                  //     {(boardsOnGrid[y][x] || {}).boardNum}
-                  //   </Cell>);
-
-                  return (
-                    <>
-                      <PC
+            return (
+              <>
+                {[
+                  ..._.range(rowStartX).map(x => {
+                    return (
+                      <
+                        Cell
                         key={x}
-                        n={n}
                         isOdd={isOdd}
-                        showOctave
-                        style={{
-                          // border: `solid ${1}px`,
-                          border: `solid 1px`,
-                          borderRadius: '50%',
-                          color: isInPcSet ? 'white' : 'grey', //TODO: printer settings as well as mediaquery stylesheet
-                          backgroundColor: hslToHex(...colorHsl),
-                          // color: isInPcSet ? 'magenta' : 'white',
-                        }}
-                      />
-                      <LumatoneKeySync
-                        h={colorHsl[0]}
-                        key={`keysync-${x}`}
-                        l={colorHsl[2]}
-                        lumaIn={lumaIn}
-                        lumaOut={lumaOut}
-                        n={n}
-                        s={colorHsl[1]}
-                        x={x}
-                        y={y}
-                      />
-                    </>
-                  );
-                })
-              ]}
-              <br/>
-            </>
-          );
-        })}
+                      >
+                        &nbsp;
+                      </Cell>);
+                  }),
+                  ..._.range(rowStartX, rows[y] + rowStartX).map(x => {
+                    const n = layout(x, y);
+
+                    const pcSet = pcSetKey >= 0 && pcSetOpts[pcSetKey].val;
+                    const isInPcSet = _.includes(pcSet, n % 12);
+                    const isInPitchSet = pitchSet[n];
+                    const colorHsl = getNoteColorHsl(n, isInPitchSet, false/* !isInPcSet*/);
+
+                    // return (
+                    //   <
+                    //     Cell
+                    //     key={x}
+                    //     isOdd={isOdd}
+                    //   >
+                    //     {(boardsOnGrid[y][x] || {}).boardNum}
+                    //   </Cell>);
+
+                    const color = {
+                      mode: 'okhsl',
+                      h: 30 + colorHsl[0],
+                      s: colorHsl[1],
+                      l: colorHsl[2],
+                      alpha: 1
+                    };
+
+                    return (
+                      <>
+                        <PC
+                          key={x}
+                          n={n}
+                          isOdd={isOdd}
+                          showOctave
+                          style={{
+                            // border: `solid ${1}px`,
+                            border: `solid 2px`,
+                            borderRadius: '50%',
+                            color: isInPcSet ? 'white' : 'black', //TODO: printer settings as well as mediaquery stylesheet
+                            backgroundColor: formatHex(color),
+                            transform: 'rotate(18.5deg)'
+                          }}
+                        />
+                        <LumatoneKeySync
+                          color={{
+                            ...color,
+                            l: Math.log2(1 + color.l * 0.5),
+                          }}
+                          key={`keysync-${x}`}
+                          lumaIn={lumaIn}
+                          lumaOut={lumaOut}
+                          n={n}
+                          x={x}
+                          y={y}
+                        />
+                      </>
+                    );
+                  })
+                ]}
+                <br/>
+              </>
+            );
+          })}
+      </div>
+
     </div>
   );
 };
