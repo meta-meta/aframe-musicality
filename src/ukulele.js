@@ -5,7 +5,7 @@ const Ukulele = () => (
   <FrettedInstrument
     fretCount={18}
     fretMarkers={[0,5,7,10,12]}
-    tuning={[7, 4, 0, 9]}
+    tuning={[7, 0, 4, 9]}
   />
 );
 
